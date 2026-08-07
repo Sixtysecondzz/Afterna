@@ -10,7 +10,7 @@ struct NativeFeedAdView: View {
         Group {
             if let ad {
                 NativeAdRepresentable(ad: ad)
-                    .frame(minHeight: 120)
+                    .frame(minHeight: 280)
             } else {
                 HStack(spacing: 12) {
                     RoundedRectangle(cornerRadius: 8)
@@ -121,8 +121,15 @@ final class NativeAdCardView: NativeAdView {
         ctaButton.configuration = config
         ctaButton.isUserInteractionEnabled = false
 
+        // AdMob requires MediaView ≥ 120×120 pt when the creative is video.
         media.translatesAutoresizingMaskIntoConstraints = false
-        media.heightAnchor.constraint(equalToConstant: 140).isActive = true
+        media.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        media.setContentCompressionResistancePriority(.required, for: .vertical)
+        NSLayoutConstraint.activate([
+            media.heightAnchor.constraint(equalToConstant: 180),
+            media.widthAnchor.constraint(greaterThanOrEqualToConstant: 120),
+            media.heightAnchor.constraint(greaterThanOrEqualToConstant: 120),
+        ])
 
         let textStack = UIStackView(arrangedSubviews: [sponsoredLabel, headlineLabel, bodyLabel, advertiserLabel])
         textStack.axis = .vertical
@@ -136,6 +143,7 @@ final class NativeAdCardView: NativeAdView {
         let root = UIStackView(arrangedSubviews: [top, media, ctaButton])
         root.axis = .vertical
         root.spacing = 10
+        root.alignment = .fill
         root.translatesAutoresizingMaskIntoConstraints = false
         addSubview(root)
         NSLayoutConstraint.activate([
@@ -143,6 +151,8 @@ final class NativeAdCardView: NativeAdView {
             root.leadingAnchor.constraint(equalTo: leadingAnchor),
             root.trailingAnchor.constraint(equalTo: trailingAnchor),
             root.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -4),
+            // Keep the card tall enough that MediaView is never collapsed in List cells.
+            heightAnchor.constraint(greaterThanOrEqualToConstant: 280),
         ])
 
         headlineView = headlineLabel
