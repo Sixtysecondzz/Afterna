@@ -1,12 +1,10 @@
 import Foundation
 import GoogleMobileAds
-import Observation
 import UIKit
 
 /// Loads a small pool of native ads for in-feed placement.
-@Observable
 @MainActor
-final class NativeAdManager: NSObject, AdLoaderDelegate, NativeAdLoaderDelegate {
+final class NativeAdManager: NSObject {
     static let shared = NativeAdManager()
 
     private(set) var readyAds: [NativeAd] = []
@@ -39,7 +37,9 @@ final class NativeAdManager: NSObject, AdLoaderDelegate, NativeAdLoaderDelegate 
         preload()
         return ad
     }
+}
 
+extension NativeAdManager: AdLoaderDelegate, NativeAdLoaderDelegate {
     nonisolated func adLoader(_ adLoader: AdLoader, didReceive nativeAd: NativeAd) {
         Task { @MainActor in
             self.readyAds.append(nativeAd)
