@@ -58,16 +58,6 @@ struct RemoteQuote: Codable, Identifiable, Sendable, Equatable {
     }
 }
 
-struct RemoteConversationPatch: Codable, Sendable {
-    var isPinned: Bool?
-    var folderId: UUID?
-
-    enum CodingKeys: String, CodingKey {
-        case isPinned = "is_pinned"
-        case folderId = "folder_id"
-    }
-}
-
 /// PostgREST client for folders / action_items / quotes / conversation pin+folder.
 actor SupabaseDataClient {
     private let baseURL: URL
@@ -117,7 +107,7 @@ actor SupabaseDataClient {
 
     func renameFolder(id: UUID, name: String, accessToken: String) async throws {
         struct Body: Encodable { var name: String }
-        try await patch("folders", query: "id=eq.\(id.uuidString)", body: Body(name: name), accessToken: accessToken)
+        try await sendPatch("folders", query: "id=eq.\(id.uuidString)", body: Body(name: name), accessToken: accessToken)
     }
 
     func deleteFolder(id: UUID, accessToken: String) async throws {
@@ -132,26 +122,24 @@ actor SupabaseDataClient {
         folderId: UUID?,
         accessToken: String
     ) async throws {
-        var patch = RemoteConversationPatch()
-        patch.isPinned = isPinned
         // Encode null folder explicitly when clearing — use separate payload
         if let folderId {
             struct Body: Encodable {
                 var is_pinned: Bool?
                 var folder_id: UUID
             }
-            try await patch(
+            try await sendPatch(
                 "conversations",
                 query: "id=eq.\(id.uuidString)",
                 body: Body(is_pinned: isPinned, folder_id: folderId),
                 accessToken: accessToken
             )
-        } else if isPinned != nil {
+        } else if let isPinned {
             struct Body: Encodable { var is_pinned: Bool }
-            try await self.patch(
+            try await sendPatch(
                 "conversations",
                 query: "id=eq.\(id.uuidString)",
-                body: Body(is_pinned: isPinned!),
+                body: Body(is_pinned: isPinned),
                 accessToken: accessToken
             )
         }
@@ -221,7 +209,7 @@ actor SupabaseDataClient {
             var updated_at: String
         }
         let now = ISO8601DateFormatter().string(from: Date())
-        try await patch(
+        try await sendPatch(
             "action_items",
             query: "id=eq.\(id.uuidString)",
             body: Body(status: status, updated_at: now),
@@ -235,7 +223,7 @@ actor SupabaseDataClient {
             var updated_at: String
         }
         let now = ISO8601DateFormatter().string(from: Date())
-        try await patch(
+        try await sendPatch(
             "action_items",
             query: "id=eq.\(id.uuidString)",
             body: Body(text: text, updated_at: now),
@@ -327,7 +315,7 @@ actor SupabaseDataClient {
         return try decoder.decode(T.self, from: data)
     }
 
-    private func patch<Body: Encodable>(_ table: String, query: String, body: Body, accessToken: String) async throws {
+    private func sendPatch<Body: Encodable>(_ table: String, query: String, body: Body, accessToken: String) async throws {
         var comps = URLComponents(url: restURL(table), resolvingAgainstBaseURL: false)!
         comps.query = query
         var request = URLRequest(url: comps.url!)
