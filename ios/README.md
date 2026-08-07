@@ -36,8 +36,8 @@ Follows [Google Mobile Ads iOS quick start](https://developers.google.com/admob/
 **Capture / recording is ad-free.**
 
 - Uses **production AdMob units** (`AdMobConfig.useTestAds = false`). Set `true` only for Google sample test IDs.
-- Google Mobile Ads is pinned to **11.13.0** (x86_64 Simulator still works on Intel MacinCloud; GMA 12 is arm64-only).
-- After pull on MacinCloud: delete DerivedData for Afterna, regenerate XcodeGen, then resolve packages.
+- Google Mobile Ads **12.x** (`MobileAds.shared`). On **Intel** MacinCloud, Simulator may fail (GMA 12 is arm64-only) — use a physical iPhone, or an arm64 Mac.
+- After Ads SDK changes: wipe DerivedData (`rm -rf ~/Library/Developer/Xcode/DerivedData/Afterna-*`), regenerate XcodeGen, Reset/Resolve packages, Clean Build.
 - App ID is set in `Afterna/Info.plist`: `ca-app-pub-9350266309525886~6797170145`.
 - **Rewarded** credits: set `GADRewardedAdUnitID` in Info.plist to your unit id (`ca-app-pub-…/…`). Guests/new users get **5 credits** (1 credit = **10 min**).
 

@@ -3,33 +3,25 @@ import GoogleMobileAds
 import UIKit
 
 @MainActor
-final class RewardedAdManager: NSObject, GADFullScreenContentDelegate {
+final class RewardedAdManager: NSObject, FullScreenContentDelegate {
     static let shared = RewardedAdManager()
 
-    private var rewardedAd: GADRewardedAd?
+    private var rewardedAd: RewardedAd?
     private var rewardHandler: ((Bool) -> Void)?
 
     func loadAd() async {
-        let ad: GADRewardedAd? = await withCheckedContinuation { continuation in
-            GADRewardedAd.load(
-                withAdUnitID: AdMobConfig.rewardedUnitID,
-                request: GADRequest()
-            ) { ad, error in
-                if let error {
-                    print("[AdMob] Rewarded load failed: \(error.localizedDescription)")
-                    continuation.resume(returning: nil)
-                    return
-                }
-                continuation.resume(returning: ad)
-            }
-        }
-        guard let ad else {
+        do {
+            let ad = try await RewardedAd.load(
+                with: AdMobConfig.rewardedUnitID,
+                request: Request()
+            )
+            ad.fullScreenContentDelegate = self
+            rewardedAd = ad
+            print("[AdMob] Rewarded loaded (\(AdMobConfig.rewardedUnitID))")
+        } catch {
+            print("[AdMob] Rewarded load failed: \(error.localizedDescription)")
             rewardedAd = nil
-            return
         }
-        ad.fullScreenContentDelegate = self
-        rewardedAd = ad
-        print("[AdMob] Rewarded loaded (\(AdMobConfig.rewardedUnitID))")
     }
 
     func show(completion: @escaping (Bool) -> Void) {
@@ -38,13 +30,9 @@ final class RewardedAdManager: NSObject, GADFullScreenContentDelegate {
             Task { await loadAd() }
             return
         }
-        guard let root = UIKitPresenter.topViewController() else {
-            completion(false)
-            return
-        }
 
         rewardHandler = completion
-        rewardedAd.present(fromRootViewController: root) { [weak self] in
+        rewardedAd.present(from: UIKitPresenter.topViewController()) { [weak self] in
             guard let self else { return }
             let handler = self.rewardHandler
             self.rewardHandler = nil
@@ -52,7 +40,7 @@ final class RewardedAdManager: NSObject, GADFullScreenContentDelegate {
         }
     }
 
-    func adDidDismissFullScreenContent(_ ad: any GADFullScreenPresentingAd) {
+    func adDidDismissFullScreenContent(_ ad: FullScreenPresentingAd) {
         rewardedAd = nil
         if rewardHandler != nil {
             let handler = rewardHandler
@@ -62,10 +50,7 @@ final class RewardedAdManager: NSObject, GADFullScreenContentDelegate {
         Task { await loadAd() }
     }
 
-    func ad(
-        _ ad: any GADFullScreenPresentingAd,
-        didFailToPresentFullScreenContentWithError error: any Error
-    ) {
+    func ad(_ ad: FullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
         print("[AdMob] Rewarded present failed: \(error.localizedDescription)")
         rewardedAd = nil
         let handler = rewardHandler

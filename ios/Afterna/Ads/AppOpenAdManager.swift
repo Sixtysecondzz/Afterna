@@ -3,10 +3,10 @@ import GoogleMobileAds
 import UIKit
 
 @MainActor
-final class AppOpenAdManager: NSObject, GADFullScreenContentDelegate {
+final class AppOpenAdManager: NSObject, FullScreenContentDelegate {
     static let shared = AppOpenAdManager()
 
-    private var appOpenAd: GADAppOpenAd?
+    private var appOpenAd: AppOpenAd?
     private var isLoadingAd = false
     private var isShowingAd = false
     private var loadTime: Date?
@@ -18,30 +18,18 @@ final class AppOpenAdManager: NSObject, GADFullScreenContentDelegate {
         isLoadingAd = true
         defer { isLoadingAd = false }
 
-        let ad: GADAppOpenAd? = await withCheckedContinuation { continuation in
-            GADAppOpenAd.load(
-                withAdUnitID: AdMobConfig.appOpenUnitID,
-                request: GADRequest()
-            ) { ad, error in
-                if let error {
-                    print("[AdMob] App open load failed: \(error.localizedDescription)")
-                    continuation.resume(returning: nil)
-                    return
-                }
-                continuation.resume(returning: ad)
-            }
-        }
-        guard let ad else {
+        do {
+            let ad = try await AppOpenAd.load(with: AdMobConfig.appOpenUnitID, request: Request())
+            ad.fullScreenContentDelegate = self
+            appOpenAd = ad
+            loadTime = Date()
+        } catch {
+            print("[AdMob] App open load failed: \(error.localizedDescription)")
             appOpenAd = nil
             loadTime = nil
-            return
         }
-        ad.fullScreenContentDelegate = self
-        appOpenAd = ad
-        loadTime = Date()
     }
 
-    /// Show on warm start / return to foreground. Skips the very first cold open.
     func showAdIfAvailable() {
         openCount += 1
         guard openCount > 1 else {
@@ -53,11 +41,7 @@ final class AppOpenAdManager: NSObject, GADFullScreenContentDelegate {
             Task { await loadAd() }
             return
         }
-        guard let root = UIKitPresenter.topViewController() else {
-            Task { await loadAd() }
-            return
-        }
-        appOpenAd.present(fromRootViewController: root)
+        appOpenAd.present(from: UIKitPresenter.topViewController())
         isShowingAd = true
     }
 
@@ -66,16 +50,13 @@ final class AppOpenAdManager: NSObject, GADFullScreenContentDelegate {
         return Date().timeIntervalSince(loadTime) < timeoutInterval
     }
 
-    func adDidDismissFullScreenContent(_ ad: any GADFullScreenPresentingAd) {
+    func adDidDismissFullScreenContent(_ ad: FullScreenPresentingAd) {
         appOpenAd = nil
         isShowingAd = false
         Task { await loadAd() }
     }
 
-    func ad(
-        _ ad: any GADFullScreenPresentingAd,
-        didFailToPresentFullScreenContentWithError error: any Error
-    ) {
+    func ad(_ ad: FullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
         print("[AdMob] App open present failed: \(error.localizedDescription)")
         appOpenAd = nil
         isShowingAd = false

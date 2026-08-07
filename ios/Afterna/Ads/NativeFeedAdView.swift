@@ -4,7 +4,7 @@ import UIKit
 
 /// In-feed native ad row styled to match Memories list cards.
 struct NativeFeedAdView: View {
-    @State private var ad: GADNativeAd?
+    @State private var ad: NativeAd?
 
     var body: some View {
         Group {
@@ -48,28 +48,28 @@ struct NativeFeedAdView: View {
 }
 
 private struct NativeAdRepresentable: UIViewRepresentable {
-    let ad: GADNativeAd
+    let ad: NativeAd
 
-    func makeUIView(context: Context) -> GADNativeAdView {
+    func makeUIView(context: Context) -> NativeAdView {
         let view = NativeAdCardView()
         view.apply(ad)
         return view
     }
 
-    func updateUIView(_ uiView: GADNativeAdView, context: Context) {
+    func updateUIView(_ uiView: NativeAdView, context: Context) {
         (uiView as? NativeAdCardView)?.apply(ad)
     }
 }
 
-/// Programmatic GADNativeAdView — no XIB required.
-final class NativeAdCardView: GADNativeAdView {
+/// Programmatic NativeAdView — no XIB required.
+final class NativeAdCardView: NativeAdView {
     private let sponsoredLabel = UILabel()
     private let headlineLabel = UILabel()
     private let bodyLabel = UILabel()
     private let advertiserLabel = UILabel()
     private let iconImageView = UIImageView()
     private let ctaButton = UIButton(type: .system)
-    private let media = GADMediaView()
+    private let media = MediaView()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -153,7 +153,7 @@ final class NativeAdCardView: GADNativeAdView {
         mediaView = media
     }
 
-    func apply(_ ad: GADNativeAd) {
+    func apply(_ ad: NativeAd) {
         headlineLabel.text = ad.headline
         bodyLabel.text = ad.body
         bodyLabel.isHidden = ad.body == nil

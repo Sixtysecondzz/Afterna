@@ -5,8 +5,7 @@ enum AdMobBootstrap {
     @MainActor
     static func start() {
         // Info.plist must contain GADApplicationIdentifier (see project.yml / README).
-        // sharedInstance is a property (not a method) in GMA 11+/12 Swift overlays.
-        GADMobileAds.sharedInstance.start { status in
+        MobileAds.shared.start { status in
             print("[AdMob] SDK started: \(status.adapterStatusesByClassName.keys.count) adapters")
         }
         Task {

@@ -3,32 +3,24 @@ import GoogleMobileAds
 import UIKit
 
 @MainActor
-final class InterstitialAdManager: NSObject, GADFullScreenContentDelegate {
+final class InterstitialAdManager: NSObject, FullScreenContentDelegate {
     static let shared = InterstitialAdManager()
 
-    private var interstitialAd: GADInterstitialAd?
+    private var interstitialAd: InterstitialAd?
     private var memoryOpenCount = 0
 
     func loadAd() async {
-        let ad: GADInterstitialAd? = await withCheckedContinuation { continuation in
-            GADInterstitialAd.load(
-                withAdUnitID: AdMobConfig.interstitialUnitID,
-                request: GADRequest()
-            ) { ad, error in
-                if let error {
-                    print("[AdMob] Interstitial load failed: \(error.localizedDescription)")
-                    continuation.resume(returning: nil)
-                    return
-                }
-                continuation.resume(returning: ad)
-            }
-        }
-        guard let ad else {
+        do {
+            let ad = try await InterstitialAd.load(
+                with: AdMobConfig.interstitialUnitID,
+                request: Request()
+            )
+            ad.fullScreenContentDelegate = self
+            interstitialAd = ad
+        } catch {
+            print("[AdMob] Interstitial load failed: \(error.localizedDescription)")
             interstitialAd = nil
-            return
         }
-        ad.fullScreenContentDelegate = self
-        interstitialAd = ad
     }
 
     func showIfReady() {
@@ -36,11 +28,7 @@ final class InterstitialAdManager: NSObject, GADFullScreenContentDelegate {
             Task { await loadAd() }
             return
         }
-        guard let root = UIKitPresenter.topViewController() else {
-            Task { await loadAd() }
-            return
-        }
-        interstitialAd.present(fromRootViewController: root)
+        interstitialAd.present(from: UIKitPresenter.topViewController())
     }
 
     func showAfterCaptureSaved() {
@@ -55,15 +43,12 @@ final class InterstitialAdManager: NSObject, GADFullScreenContentDelegate {
         }
     }
 
-    func adDidDismissFullScreenContent(_ ad: any GADFullScreenPresentingAd) {
+    func adDidDismissFullScreenContent(_ ad: FullScreenPresentingAd) {
         interstitialAd = nil
         Task { await loadAd() }
     }
 
-    func ad(
-        _ ad: any GADFullScreenPresentingAd,
-        didFailToPresentFullScreenContentWithError error: any Error
-    ) {
+    func ad(_ ad: FullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
         print("[AdMob] Interstitial present failed: \(error.localizedDescription)")
         interstitialAd = nil
         Task { await loadAd() }

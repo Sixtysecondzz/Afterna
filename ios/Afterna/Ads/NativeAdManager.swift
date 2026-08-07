@@ -7,8 +7,8 @@ import UIKit
 final class NativeAdManager: NSObject {
     static let shared = NativeAdManager()
 
-    private(set) var readyAds: [GADNativeAd] = []
-    private var adLoader: GADAdLoader?
+    private(set) var readyAds: [NativeAd] = []
+    private var adLoader: AdLoader?
     private var loading = false
     private let poolSize = 3
 
@@ -16,7 +16,7 @@ final class NativeAdManager: NSObject {
         guard !loading else { return }
         guard readyAds.count < poolSize else { return }
         loading = true
-        let loader = GADAdLoader(
+        let loader = AdLoader(
             adUnitID: AdMobConfig.nativeUnitID,
             rootViewController: UIKitPresenter.topViewController(),
             adTypes: [.native],
@@ -24,10 +24,10 @@ final class NativeAdManager: NSObject {
         )
         loader.delegate = self
         adLoader = loader
-        loader.load(GADRequest())
+        loader.load(Request())
     }
 
-    func dequeueAd() -> GADNativeAd? {
+    func dequeueAd() -> NativeAd? {
         guard !readyAds.isEmpty else {
             preload()
             return nil
@@ -38,8 +38,8 @@ final class NativeAdManager: NSObject {
     }
 }
 
-extension NativeAdManager: GADAdLoaderDelegate, GADNativeAdLoaderDelegate {
-    nonisolated func adLoader(_ adLoader: GADAdLoader, didReceive nativeAd: GADNativeAd) {
+extension NativeAdManager: AdLoaderDelegate, NativeAdLoaderDelegate {
+    nonisolated func adLoader(_ adLoader: AdLoader, didReceive nativeAd: NativeAd) {
         Task { @MainActor in
             self.readyAds.append(nativeAd)
             self.loading = false
@@ -50,7 +50,7 @@ extension NativeAdManager: GADAdLoaderDelegate, GADNativeAdLoaderDelegate {
         }
     }
 
-    nonisolated func adLoader(_ adLoader: GADAdLoader, didFailToReceiveAdWithError error: any Error) {
+    nonisolated func adLoader(_ adLoader: AdLoader, didFailToReceiveAdWithError error: Error) {
         Task { @MainActor in
             self.loading = false
             print("[AdMob] Native load failed: \(error.localizedDescription)")
