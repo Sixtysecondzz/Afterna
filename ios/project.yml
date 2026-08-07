@@ -12,9 +12,6 @@ packages:
   GoogleMobileAds:
     url: https://github.com/googleads/swift-package-manager-google-mobile-ads.git
     from: "12.0.0"
-  supabase-swift:
-    url: https://github.com/supabase/supabase-swift.git
-    from: "2.0.0"
   GoogleSignIn:
     url: https://github.com/google/GoogleSignIn-iOS.git
     from: "8.0.0"
@@ -54,8 +51,6 @@ targets:
     dependencies:
       - package: GoogleMobileAds
         product: GoogleMobileAds
-      - package: supabase-swift
-        product: Supabase
       - package: GoogleSignIn
         product: GoogleSignIn
     scheme:

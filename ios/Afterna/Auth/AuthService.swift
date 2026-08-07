@@ -2,7 +2,6 @@ import AuthenticationServices
 import Foundation
 import GoogleSignIn
 import Observation
-import Supabase
 
 @Observable
 @MainActor
@@ -20,12 +19,12 @@ final class AuthService {
     var lastError: String?
 
     let tokenStore = KeychainTokenStore()
-    private var supabase: SupabaseClient?
+    private var client: SupabaseAuthClient?
 
     init() {
         if AuthConfig.isSupabaseConfigured,
            let url = URL(string: AuthConfig.supabaseURL) {
-            supabase = SupabaseClient(supabaseURL: url, supabaseKey: AuthConfig.supabaseAnonKey)
+            client = SupabaseAuthClient(baseURL: url, anonKey: AuthConfig.supabaseAnonKey)
         }
         if AuthConfig.isGoogleConfigured {
             GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: AuthConfig.googleIOSClientID)
@@ -34,8 +33,7 @@ final class AuthService {
 
     func bootstrap() async {
         lastError = nil
-        guard let supabase else {
-            // No Supabase yet — restore demo session if present, else signed out.
+        guard let client else {
             if let token = await tokenStore.accessToken(), !token.isEmpty {
                 status = .signedIn
                 displayName = token == "dev-user" ? "Demo User" : "Signed in"
@@ -45,9 +43,16 @@ final class AuthService {
             return
         }
 
+        guard let token = await tokenStore.accessToken(), !token.isEmpty, token != "dev-user" else {
+            status = .signedOut
+            return
+        }
+
         do {
-            let session = try await supabase.auth.session
-            await apply(session: session)
+            let user = try await client.user(accessToken: token)
+            userId = user.id
+            email = user.email
+            displayName = user.userMetadata?["full_name"]?.stringValue ?? user.email ?? "Afterna user"
             status = .signedIn
         } catch {
             tokenStore.clear()
@@ -57,23 +62,22 @@ final class AuthService {
 
     func signInWithApple(idToken: String, fullName: PersonNameComponents?) async {
         lastError = nil
-        guard let supabase else {
+        guard let client else {
             lastError = "Supabase is not configured. Add SUPABASE_URL and SUPABASE_ANON_KEY."
             return
         }
         do {
-            let session = try await supabase.auth.signInWithIdToken(
-                credentials: .init(provider: .apple, idToken: idToken)
-            )
+            let session = try await client.signInWithIdToken(provider: "apple", idToken: idToken)
             if let fullName {
                 let formatted = PersonNameComponentsFormatter().string(from: fullName)
                 if !formatted.isEmpty {
-                    _ = try? await supabase.auth.update(
-                        user: UserAttributes(data: ["full_name": .string(formatted)])
+                    try? await client.updateUserMetadata(
+                        accessToken: session.accessToken,
+                        data: ["full_name": formatted]
                     )
                 }
             }
-            await apply(session: session)
+            apply(session: session)
             status = .signedIn
         } catch {
             lastError = error.localizedDescription
@@ -87,7 +91,7 @@ final class AuthService {
             lastError = "Google Sign-In is not configured. Add GIDClientID (iOS OAuth client)."
             return
         }
-        guard let supabase else {
+        guard let client else {
             lastError = "Supabase is not configured. Add SUPABASE_URL and SUPABASE_ANON_KEY."
             return
         }
@@ -103,17 +107,14 @@ final class AuthService {
                 return
             }
             let accessToken = result.user.accessToken.tokenString
-            let session = try await supabase.auth.signInWithIdToken(
-                credentials: OpenIDConnectCredentials(
-                    provider: .google,
-                    idToken: idToken,
-                    accessToken: accessToken
-                )
+            let session = try await client.signInWithIdToken(
+                provider: "google",
+                idToken: idToken,
+                accessToken: accessToken
             )
-            await apply(session: session)
+            apply(session: session)
             status = .signedIn
         } catch {
-            // User cancel is common — keep message light
             let ns = error as NSError
             if ns.domain == "com.google.GIDSignIn", ns.code == -5 {
                 lastError = nil
@@ -123,7 +124,6 @@ final class AuthService {
         }
     }
 
-    /// Local-only path until Supabase keys are installed (API Bearer dev-user).
     func continueAsDemo() async {
         tokenStore.save(accessToken: "dev-user", refreshToken: nil, userId: "demo")
         displayName = "Demo User"
@@ -134,8 +134,8 @@ final class AuthService {
     }
 
     func signOut() async {
-        if let supabase {
-            try? await supabase.auth.signOut()
+        if let client, let token = await tokenStore.accessToken(), token != "dev-user" {
+            try? await client.signOut(accessToken: token)
         }
         GIDSignIn.sharedInstance.signOut()
         tokenStore.clear()
@@ -145,14 +145,16 @@ final class AuthService {
         status = .signedOut
     }
 
-    private func apply(session: Session) async {
+    private func apply(session: SupabaseSession) {
         tokenStore.save(
             accessToken: session.accessToken,
             refreshToken: session.refreshToken,
-            userId: session.user.id.uuidString
+            userId: session.user.id
         )
-        userId = session.user.id.uuidString
+        userId = session.user.id
         email = session.user.email
-        displayName = session.user.email ?? "Afterna user"
+        displayName = session.user.userMetadata?["full_name"]?.stringValue
+            ?? session.user.email
+            ?? "Afterna user"
     }
 }
