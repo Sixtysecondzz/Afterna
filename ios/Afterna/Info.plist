@@ -210,7 +210,7 @@
 	</array>
 	<!-- Auth: replace placeholders before enabling live Apple/Google login -->
 	<key>SUPABASE_URL</key>
-	<string>YOUR_SUPABASE_URL</string>
+	<string>https://njhvksxylqhqkshoedkq.supabase.co</string>
 	<key>SUPABASE_ANON_KEY</key>
 	<string>YOUR_SUPABASE_ANON_KEY</string>
 	<key>GIDClientID</key>
