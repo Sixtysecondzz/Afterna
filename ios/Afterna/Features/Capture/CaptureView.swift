@@ -132,7 +132,11 @@ struct CaptureView: View {
             do {
                 _ = try container.audio.start(sessionId: sessionId)
                 isRecording = true
+                #if targetEnvironment(simulator)
+                statusText = "Listening… (Simulator may use a fallback tone if mic is unavailable)"
+                #else
                 statusText = "Listening…"
+                #endif
             } catch {
                 statusText = "Could not start: \(error.localizedDescription)"
             }
