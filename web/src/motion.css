@@ -1,0 +1,74 @@
+/* Light motion overlays for Granola-aligned Afterna */
+
+.plane--lime {
+  --plane-rot: -7deg;
+  animation: planeDrift 20s cubic-bezier(0.25, 1, 0.5, 1) infinite alternate;
+}
+
+.plane--burst {
+  --plane-rot: 8deg;
+  animation: planeDrift 24s cubic-bezier(0.25, 1, 0.5, 1) -5s infinite alternate-reverse;
+}
+
+.plane--ink {
+  --plane-rot: 4deg;
+  animation: planeDrift 26s cubic-bezier(0.25, 1, 0.5, 1) -10s infinite alternate;
+}
+
+.app-window--hero {
+  animation: cardSettle 1.1s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+}
+
+.iphone {
+  animation: phoneSettle 1.25s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
+}
+
+@keyframes planeDrift {
+  from {
+    transform: rotate(var(--plane-rot, 6deg)) translate3d(0, 0, 0);
+  }
+  to {
+    transform: rotate(var(--plane-rot, 6deg)) translate3d(-8px, 6px, 0);
+  }
+}
+
+@keyframes cardSettle {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes phoneSettle {
+  from {
+    opacity: 0;
+    transform: rotate(5deg) translate3d(0, 22px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(5deg);
+  }
+}
+
+.btn--pill:active,
+.btn--ink:active {
+  transform: translateY(1px) scale(0.985);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plane--lime,
+  .plane--burst,
+  .plane--ink,
+  .app-window--hero,
+  .iphone {
+    animation: none;
+  }
+
+  .iphone {
+    transform: rotate(5deg);
+  }
+}

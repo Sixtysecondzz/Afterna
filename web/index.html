@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en-AU">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Afterna - Private conversation memory</title>
+    <meta
+      name="description"
+      content="Private iPhone conversation memory for Australian freelancers. Summaries, decisions, and answers with citations. No meeting bot. Audio deleted by default."
+    />
+    <meta name="theme-color" content="#F7F6F2" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Sora:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/styles.css" />
+    <link rel="stylesheet" href="/src/motion.css" />
+  </head>
+  <body>
+    <header class="nav">
+      <a class="nav__brand" href="#top" aria-label="Afterna home">Afterna</a>
+      <nav class="nav__links" aria-label="Primary">
+        <a href="#memory">Memory</a>
+        <a href="#moments">How it works</a>
+        <a href="#ask">Ask</a>
+        <a href="#privacy">Privacy</a>
+      </nav>
+      <a class="nav__cta" href="#waitlist">Request access</a>
+    </header>
+
+    <main id="top">
+      <!-- Hero — Granola-style split + iPhone module -->
+      <section class="hero" aria-labelledby="hero-headline">
+        <div class="hero__grid">
+          <div class="hero__copy">
+            <a class="hero__badge reveal" href="#waitlist">
+              <span class="hero__badge-new">New</span>
+              Afterna for iPhone →
+            </a>
+            <p class="hero__brand reveal delay-1" id="hero-brand">Afterna</p>
+            <h1 class="hero__headline reveal delay-1" id="hero-headline">
+              Private conversation memory<br />for real-world work.
+            </h1>
+            <p class="hero__support reveal delay-2">
+              Notes, decisions and memory.<br />
+              Without a meeting bot.
+            </p>
+            <div class="hero__actions reveal delay-3">
+              <a class="btn btn--pill" href="#waitlist">Request access ↓</a>
+            </div>
+            <p class="hero__platforms reveal delay-4">
+              <span class="hero__check" aria-hidden="true"></span>
+              Available on iPhone
+            </p>
+          </div>
+
+          <div class="hero__visual reveal delay-2" aria-hidden="true">
+            <div class="hero__planes">
+              <span class="plane plane--lime"></span>
+              <span class="plane plane--burst"></span>
+              <span class="plane plane--ink"></span>
+            </div>
+
+            <div class="app-window app-window--hero">
+              <div class="app-window__bar">
+                <span class="traffic"><i></i><i></i><i></i></span>
+              </div>
+              <h3 class="app-window__title">Site walkthrough</h3>
+              <div class="app-window__meta">
+                <span>Today</span>
+                <span>2 people</span>
+              </div>
+              <ul class="app-window__list">
+                <li>
+                  <strong>Pricing &amp; next steps</strong>
+                  <span>Agreed fixed fee for phase one — deposit due Friday</span>
+                </li>
+                <li>
+                  <strong>Materials</strong>
+                  <span>Shortlist by Wednesday before ordering</span>
+                </li>
+                <li>
+                  <strong>Follow-up</strong>
+                  <span>Tuesday check-in after site photos</span>
+                </li>
+              </ul>
+              <button class="app-window__generate" type="button" tabindex="-1">
+                Generate notes
+              </button>
+            </div>
+
+            <div class="iphone">
+              <div class="iphone__notch"></div>
+              <div class="iphone__screen">
+                <div class="iphone__feed">
+                  <div class="iphone__tile iphone__tile--a">
+                    <span class="iphone__avatar">J</span>
+                    <span class="iphone__name">Jordan</span>
+                  </div>
+                  <div class="iphone__tile iphone__tile--b">
+                    <span class="iphone__avatar">You</span>
+                    <span class="iphone__name">You</span>
+                  </div>
+                </div>
+                <div class="iphone__controls">
+                  <span class="iphone__btn" title="Mute"></span>
+                  <span class="iphone__btn" title="Camera"></span>
+                  <span class="iphone__btn iphone__btn--end" title="End"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Dark trust band (Granola logo strip energy, no fake logos) -->
+      <section class="band-dark" aria-label="Who Afterna is for">
+        <p class="band-dark__eyebrow">For the people who live on conversations</p>
+        <ul class="band-dark__roles">
+          <li>Consultants</li>
+          <li>+</li>
+          <li>Agents</li>
+          <li>+</li>
+          <li>Coaches</li>
+          <li>+</li>
+          <li>Inspectors</li>
+          <li>+</li>
+          <li>Sole traders</li>
+        </ul>
+      </section>
+
+      <!-- Effortless feature -->
+      <section class="section section--effortless" id="memory" aria-labelledby="memory-title">
+        <div class="section__inner section__inner--split">
+          <div>
+            <h2 class="section__title reveal" id="memory-title">
+              Effortless memory,<br />settled instantly.
+            </h2>
+            <ul class="icon-list reveal delay-1">
+              <li>
+                <span class="icon-list__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 8h16M4 12h10M4 16h14"/><path d="M18 6l2 2-2 2"/></svg>
+                </span>
+                <span>Uses your iPhone mic, so it <em>doesn't invite a bot</em></span>
+              </li>
+              <li>
+                <span class="icon-list__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>
+                </span>
+                <span><em>Private by default</em>, easy to share if you choose</span>
+              </li>
+              <li>
+                <span class="icon-list__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M8 12l2.5 2.5L16 9"/></svg>
+                </span>
+                <span>Works for <em>client chats, site visits, and appointment calls</em></span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="float-stage reveal delay-2" aria-hidden="true">
+            <div class="app-window app-window--float">
+              <div class="app-window__bar">
+                <span class="traffic"><i></i><i></i><i></i></span>
+                <span class="app-window__name">Fitzroy renovation</span>
+              </div>
+              <h3 class="app-window__title">ICP &amp; fee alignment</h3>
+              <ul class="app-window__list">
+                <li>Agreed to narrow scope to phase one</li>
+                <li>SMB work deprioritised this quarter</li>
+                <li>Follow-up scheduled for Tuesday</li>
+              </ul>
+              <div class="app-window__enhance">
+                <span class="spinner"></span>
+                Enhancing notes
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bridge line -->
+      <section class="bridge" aria-labelledby="bridge-title">
+        <h2 class="bridge__title reveal" id="bridge-title">
+          Afterna helps you before, during<br />and after the conversation.
+        </h2>
+      </section>
+
+      <!-- Sticky moments (Granola before/during/after) -->
+      <section class="section section--moments" id="moments" aria-labelledby="moments-title">
+        <div class="moments" data-moments>
+          <aside class="moments__nav reveal" aria-label="Conversation moments">
+            <p class="sr-only" id="moments-title">How Afterna works</p>
+            <button class="moments__tab is-active" role="tab" aria-selected="true" data-moment="record" type="button">
+              Record
+            </button>
+            <button class="moments__tab" role="tab" aria-selected="false" data-moment="settle" type="button">
+              Settle
+            </button>
+            <button class="moments__tab" role="tab" aria-selected="false" data-moment="ask" type="button">
+              Ask
+            </button>
+          </aside>
+
+          <div class="moments__stage">
+            <article class="moments__panel is-active" data-panel="record">
+              <h3 class="moments__heading reveal">Give the room your full attention</h3>
+              <p class="moments__lede reveal delay-1">
+                One tap on iPhone. Continues through lock screen and the walk to the car — no bot joins the call.
+              </p>
+              <div class="moments__visual reveal delay-2" aria-hidden="true">
+                <div class="moments__canvas moments__canvas--record">
+                  <div class="phone-card">
+                    <span class="phone-card__rec"></span>
+                    <strong>14:22</strong>
+                    <span>Recording</span>
+                  </div>
+                  <div class="app-window app-window--compact">
+                    <div class="app-window__bar">
+                      <span class="traffic"><i></i><i></i><i></i></span>
+                    </div>
+                    <p class="app-window__live">Listening…</p>
+                    <div class="waveform" aria-hidden="true">
+                      <span></span><span></span><span></span><span></span><span></span>
+                      <span></span><span></span><span></span><span></span><span></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="moments__panel" data-panel="settle" hidden>
+              <h3 class="moments__heading">Post-conversation admin, done</h3>
+              <p class="moments__lede">
+                Summary, decisions, and next steps are ready the moment the talk ends — so you can move things forward.
+              </p>
+              <div class="moments__visual" aria-hidden="true">
+                <div class="moments__canvas moments__canvas--settle">
+                  <div class="app-window">
+                    <div class="app-window__bar">
+                      <span class="traffic"><i></i><i></i><i></i></span>
+                      <span class="app-window__name">Site walkthrough</span>
+                    </div>
+                    <h3 class="app-window__title">Next steps</h3>
+                    <ul class="app-window__list">
+                      <li>Send fee confirmation today</li>
+                      <li>Shortlist materials by Wednesday</li>
+                      <li>Book follow-up for Tuesday</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="moments__panel" data-panel="ask" hidden>
+              <h3 class="moments__heading">Ask what was said — with receipts</h3>
+              <p class="moments__lede">
+                Search across conversations. Every answer comes with a timestamp you can open.
+              </p>
+              <div class="moments__visual" aria-hidden="true">
+                <div class="moments__canvas moments__canvas--ask">
+                  <div class="ask-card">
+                    <p class="ask-card__q">What did we agree about pricing?</p>
+                    <p class="ask-card__a">
+                      You agreed a fixed fee for phase one, with deposit due Friday.
+                    </p>
+                    <span class="ask-card__cite">03:22–04:15 · Site walkthrough</span>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- Lime Ask band (Granola Chat energy) -->
+      <section class="band-ask" id="ask" aria-labelledby="ask-title">
+        <div class="band-ask__inner">
+          <div>
+            <p class="band-ask__label reveal">Afterna Ask</p>
+            <h2 class="band-ask__title reveal delay-1" id="ask-title">
+              Perfect<br />conversation<br />memory
+            </h2>
+          </div>
+          <div class="ask-box reveal delay-2" aria-hidden="true">
+            <div class="ask-box__chip">Client calls</div>
+            <p class="ask-box__prompt">Which fees did we lock in this month<span class="ask-box__caret"></span></p>
+            <div class="ask-box__tools">
+              <span></span><span></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Features hairline grid -->
+      <section class="section section--features" id="privacy" aria-labelledby="features-title">
+        <div class="section__inner">
+          <div class="features-head">
+            <h2 class="section__title reveal" id="features-title">
+              Works wherever the work happens
+            </h2>
+            <a class="btn btn--ink reveal delay-1" href="#waitlist">Request access</a>
+          </div>
+
+          <div class="feature-grid">
+            <article class="feature-row reveal">
+              <h3>Humans in the room, not bots</h3>
+              <p>Afterna doesn’t join the call. It captures from your iPhone while you stay present.</p>
+            </article>
+            <article class="feature-row reveal delay-1">
+              <h3>Private by default, ready to share</h3>
+              <p>Your notes are for you. Search them, polish them, then send a summary if you choose.</p>
+            </article>
+            <article class="feature-row reveal">
+              <h3>Transcript-first. Audio optional.</h3>
+              <p>By default, the recording is deleted after transcription. Keep the words. Leave the voice behind.</p>
+            </article>
+            <article class="feature-row reveal delay-1">
+              <h3>Made for in-person conversations too</h3>
+              <p>Site visits, coffee catch-ups, appointment calls — capture wherever the agreement happens.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- Final CTA -->
+      <section class="section section--cta" id="waitlist" aria-labelledby="waitlist-title">
+        <div class="cta-shell">
+          <span class="cta-shell__bar cta-shell__bar--lime" aria-hidden="true"></span>
+          <div class="cta-shell__content">
+            <h2 class="section__title reveal" id="waitlist-title">
+              Private conversation<br />memory, by invitation.
+            </h2>
+            <p class="section__lede reveal delay-1">
+              For Australian freelancers and field professionals. Soft weekly minutes. No subscription required to start.
+            </p>
+            <form class="waitlist reveal delay-2" id="waitlist-form">
+              <label class="sr-only" for="email">Email</label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                required
+                autocomplete="email"
+                placeholder="you@studio.com.au"
+              />
+              <button class="btn btn--ink" type="submit">Request access</button>
+            </form>
+            <p class="form-note" id="form-note" hidden>You're on the list. We'll be in touch.</p>
+          </div>
+          <span class="cta-shell__bar cta-shell__bar--texture" aria-hidden="true"></span>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer__inner">
+        <div class="footer__brand-block">
+          <span class="footer__brand">Afterna</span>
+          <p>After the conversation, still yours.</p>
+        </div>
+        <div class="footer__cols">
+          <div>
+            <h4>Product</h4>
+            <a href="#memory">Memory</a>
+            <a href="#ask">Ask</a>
+            <a href="#moments">How it works</a>
+            <a href="#privacy">Privacy</a>
+          </div>
+          <div>
+            <h4>Company</h4>
+            <a href="#waitlist">Early access</a>
+            <a href="#waitlist">Contact</a>
+          </div>
+          <div>
+            <h4>Legal</h4>
+            <span>Privacy</span>
+            <span>Terms</span>
+          </div>
+        </div>
+        <p class="footer__meta">© <span id="year"></span> Afterna · Coming to iPhone</p>
+      </div>
+    </footer>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,249 @@
+openapi: 3.0.3
+info:
+  title: Afterna API
+  version: 0.1.0
+  description: Upload auto-enqueue, job status, transcript sync, Ask AI.
+servers:
+  - url: http://localhost:8787
+paths:
+  /v1/config:
+    get:
+      summary: Remote configuration
+      responses:
+        "200":
+          description: Typed remote config
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RemoteConfig"
+  /v1/uploads/presign:
+    post:
+      summary: Create recording + signed upload URL
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PresignRequest"
+      responses:
+        "200":
+          description: Presigned upload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PresignResponse"
+  /v1/uploads/complete:
+    post:
+      summary: Complete upload and auto-enqueue transcription
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompleteUploadRequest"
+      responses:
+        "200":
+          description: Job enqueued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompleteUploadResponse"
+  /v1/jobs/{id}:
+    get:
+      summary: Job status
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobStatus"
+  /v1/conversations/{id}/transcript:
+    get:
+      summary: Transcript + summary artifacts
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Conversation artifacts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConversationTranscript"
+  /v1/ask:
+    post:
+      summary: Ask AI with citations
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AskRequest"
+      responses:
+        "200":
+          description: Answer + citations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AskResponse"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    RemoteConfig:
+      type: object
+      required: [base_free_minutes, ai_daily_limit, feature_flags]
+      properties:
+        base_free_minutes: { type: integer }
+        reward_minutes: { type: integer }
+        max_daily_rewards: { type: integer }
+        banner_enabled: { type: boolean }
+        native_feed_interval: { type: integer }
+        banner_refresh_interval: { type: integer }
+        ai_daily_limit: { type: integer }
+        ads_on_summary_enabled: { type: boolean }
+        feature_flags:
+          type: object
+          properties:
+            fixture_mode: { type: boolean }
+            ask_ai: { type: boolean }
+            cross_conversation_search: { type: boolean }
+    PresignRequest:
+      type: object
+      properties:
+        duration_ms: { type: integer }
+        mime_type: { type: string, default: audio/mp4 }
+        byte_size: { type: integer }
+        checksum_sha256: { type: string }
+        keep_audio: { type: boolean }
+        language_hint: { type: string }
+        require_diarization: { type: boolean, default: true }
+    PresignResponse:
+      type: object
+      required: [recording_id, conversation_id, upload_url]
+      properties:
+        recording_id: { type: string, format: uuid }
+        conversation_id: { type: string, format: uuid }
+        storage_path: { type: string }
+        upload_url: { type: string, format: uri }
+        upload_token: { type: string, nullable: true }
+        upload_mode: { type: string, enum: [supabase, local] }
+        headers:
+          type: object
+          additionalProperties: { type: string }
+    CompleteUploadRequest:
+      type: object
+      required: [recording_id]
+      properties:
+        recording_id: { type: string, format: uuid }
+        checksum_sha256: { type: string }
+        byte_size: { type: integer }
+        duration_ms: { type: integer }
+    CompleteUploadResponse:
+      type: object
+      required: [recording_id, job_id, transcription_status]
+      properties:
+        recording_id: { type: string, format: uuid }
+        conversation_id: { type: string, format: uuid }
+        job_id: { type: string, format: uuid }
+        job_status: { type: string }
+        transcription_status: { type: string }
+        message: { type: string }
+    JobStatus:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        job_type: { type: string }
+        status: { type: string, enum: [queued, running, succeeded, failed, dead] }
+        recording_id: { type: string, nullable: true }
+        conversation_id: { type: string, nullable: true }
+        provider: { type: string, nullable: true }
+        model: { type: string, nullable: true }
+        attempts: { type: integer }
+        error: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        started_at: { type: string, format: date-time, nullable: true }
+        finished_at: { type: string, format: date-time, nullable: true }
+    CanonicalSegment:
+      type: object
+      properties:
+        id: { type: string }
+        speaker_label: { type: string }
+        text: { type: string }
+        t_start_ms: { type: integer }
+        t_end_ms: { type: integer }
+        confidence: { type: number, nullable: true }
+    CanonicalTranscript:
+      type: object
+      properties:
+        recordingId: { type: string }
+        provider: { type: string }
+        model: { type: string }
+        language: { type: string }
+        fullText: { type: string }
+        segments:
+          type: array
+          items: { $ref: "#/components/schemas/CanonicalSegment" }
+        durationMs: { type: integer }
+    ConversationTranscript:
+      type: object
+      properties:
+        conversation_id: { type: string }
+        status: { type: string }
+        has_embeddings: { type: boolean }
+        segments:
+          type: array
+          items: { type: object }
+        summary: { type: object, nullable: true }
+        action_items:
+          type: array
+          items: { type: object }
+    AskRequest:
+      type: object
+      required: [question]
+      properties:
+        question: { type: string }
+        scope: { type: string, enum: [conversation, all, folder] }
+        conversation_id: { type: string, format: uuid }
+        folder_id: { type: string, format: uuid }
+    AskResponse:
+      type: object
+      properties:
+        id: { type: string }
+        answer: { type: string }
+        citations:
+          type: array
+          items:
+            type: object
+            properties:
+              conversation_id: { type: string }
+              segment_id: { type: string }
+              t_start_ms: { type: integer }
+              t_end_ms: { type: integer }
+              speaker_label: { type: string, nullable: true }
+              quote: { type: string }
+        model: { type: string }

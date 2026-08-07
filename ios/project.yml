@@ -1,0 +1,22 @@
+name: Afterna
+options:
+  bundleIdPrefix: app.afterna
+  deploymentTarget:
+    iOS: "17.0"
+packages:
+  ConversationCore:
+    path: .
+targets:
+  Afterna:
+    type: application
+    platform: iOS
+    sources:
+      - Afterna
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: app.afterna.ios
+      INFOPLIST_KEY_NSMicrophoneUsageDescription: Afterna records conversations you choose to capture.
+      INFOPLIST_KEY_UILaunchScreen_Generation: YES
+      SWIFT_STRICT_CONCURRENCY: complete
+    dependencies:
+      - package: ConversationCore
+        product: ConversationCore

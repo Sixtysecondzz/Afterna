@@ -1,0 +1,36 @@
+{
+  "summary": "Team agreed to ship Afterna's upload → auto-transcribe → extract pipeline this week.",
+  "key_points": [
+    "Upload complete should enqueue transcription automatically",
+    "Extract action items after transcript is ready"
+  ],
+  "decisions": [
+    {
+      "text": "Ship upload pipeline this week",
+      "decided_by": "Alex",
+      "segment_ids": ["seg-1"],
+      "t_start_ms": 0,
+      "t_end_ms": 4200
+    }
+  ],
+  "action_items": [
+    {
+      "text": "Implement auto-transcribe after upload complete",
+      "assignee": "Sam",
+      "due_date": null,
+      "confidence": 0.9,
+      "segment_ids": ["seg-2"],
+      "t_start_ms": 4300,
+      "t_end_ms": 9100
+    }
+  ],
+  "deadlines": [],
+  "entities": [
+    {
+      "name": "Afterna",
+      "type": "project",
+      "aliases": [],
+      "mentions": [{ "segment_id": "seg-1", "t_start_ms": 0, "t_end_ms": 4200 }]
+    }
+  ]
+}

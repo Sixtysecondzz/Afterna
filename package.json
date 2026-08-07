@@ -1,0 +1,22 @@
+{
+  "name": "afterna",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Afterna monorepo — iOS conversation memory, backend APIs, marketing site",
+  "workspaces": [
+    "web",
+    "backend"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev -w afterna-web",
+    "dev:api": "npm run dev -w afterna-backend",
+    "build:web": "npm run build -w afterna-web",
+    "build:api": "npm run build -w afterna-backend",
+    "start:api": "npm run start -w afterna-backend",
+    "worker": "npm run worker -w afterna-backend",
+    "typecheck": "npm run typecheck -w afterna-backend"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

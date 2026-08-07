@@ -1,0 +1,29 @@
+{
+  "recordingId": "00000000-0000-4000-8000-000000000010",
+  "provider": "fixture",
+  "model": "fixture-v1",
+  "language": "en",
+  "fullText": "Alex: Let's ship the Afterna upload pipeline this week. Sam: Agreed — auto-transcribe after complete, then extract action items.",
+  "segments": [
+    {
+      "id": "seg-1",
+      "speakerLabel": "A",
+      "text": "Let's ship the Afterna upload pipeline this week.",
+      "startMs": 0,
+      "endMs": 4200,
+      "confidence": 0.94
+    },
+    {
+      "id": "seg-2",
+      "speakerLabel": "B",
+      "text": "Agreed — auto-transcribe after complete, then extract action items.",
+      "startMs": 4300,
+      "endMs": 9100,
+      "confidence": 0.92
+    }
+  ],
+  "words": [],
+  "durationMs": 9200,
+  "createdAt": "2026-08-07T00:00:00.000Z",
+  "rawArtifactURI": null
+}
