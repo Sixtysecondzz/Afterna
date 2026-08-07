@@ -47,6 +47,12 @@ struct RootView: View {
             .tag(AppTab.capture)
 
             NavigationStack {
+                TodosView()
+            }
+            .tabItem { Label("To-dos", systemImage: "checklist") }
+            .tag(AppTab.todos)
+
+            NavigationStack {
                 SearchView()
             }
             .tabItem { Label("Search", systemImage: "magnifyingglass") }
@@ -63,5 +69,5 @@ struct RootView: View {
 }
 
 enum AppTab: Hashable {
-    case memories, capture, search, settings
+    case memories, capture, todos, search, settings
 }

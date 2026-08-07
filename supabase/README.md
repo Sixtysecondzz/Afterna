@@ -11,6 +11,8 @@ supabase start
 supabase db reset
 ```
 
+Also run newer files in `migrations/` via the SQL Editor if CLI is unavailable (e.g. `20260808000001_memory_org.sql` for pins, quotes, global todos).
+
 ## Auth providers
 
 ### Sign in with Apple
