@@ -212,9 +212,9 @@
 	<key>SUPABASE_URL</key>
 	<string>https://njhvksxylqhqkshoedkq.supabase.co</string>
 	<key>SUPABASE_ANON_KEY</key>
-	<string>YOUR_SUPABASE_ANON_KEY</string>
+	<string>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qaHZrc3h5bHFocWtzaG9lZGtxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwNjY2NjIsImV4cCI6MjEwMTY0MjY2Mn0.C9W_7NnaMW6j7BzinbTCY3JYujCVOJOjUWSEFsLJPbs</string>
 	<key>GIDClientID</key>
-	<string>YOUR_IOS_CLIENT_ID.apps.googleusercontent.com</string>
+	<string>514813066841-7393mhcn9vtdnu4g53sohqt8u3gjigda.apps.googleusercontent.com</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -222,8 +222,7 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<!-- Reversed Google iOS client ID: com.googleusercontent.apps.123456789-abcdef -->
-				<string>com.googleusercontent.apps.YOUR_IOS_CLIENT_ID</string>
+				<string>com.googleusercontent.apps.514813066841-7393mhcn9vtdnu4g53sohqt8u3gjigda</string>
 			</array>
 		</dict>
 	</array>
