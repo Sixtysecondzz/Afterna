@@ -10,9 +10,7 @@ enum AdMobConfig {
     static let productionAppOpen = "ca-app-pub-9350266309525886/4087246329"
     static let productionInterstitial = "ca-app-pub-9350266309525886/6837798679"
     static let productionBanner = "ca-app-pub-9350266309525886/3320959568"
-    /// Replace with your Rewarded ad *unit* ID (`ca-app-pub-…/…`, not the App ID with `~`).
-    /// Until set, falls back to Google's sample rewarded unit so earn-credits works in testing.
-    static let productionRewarded = "ca-app-pub-9350266309525886/REPLACE_WITH_REWARDED_UNIT"
+    static let productionRewarded = "ca-app-pub-9350266309525886/8233660880"
 
     static let testAppOpen = "ca-app-pub-3940256099942544/5575463023"
     static let testInterstitial = "ca-app-pub-3940256099942544/4411468910"

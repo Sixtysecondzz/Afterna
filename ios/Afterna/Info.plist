@@ -7,7 +7,7 @@
 	<string>ca-app-pub-9350266309525886~6797170145</string>
 	<!-- Rewarded ad UNIT id (must use / not ~). Leave unset to use Google sample rewarded unit. -->
 	<key>GADRewardedAdUnitID</key>
-	<string></string>
+	<string>ca-app-pub-9350266309525886/8233660880</string>
 	<key>SKAdNetworkItems</key>
 	<array>
 		<dict>
