@@ -28,6 +28,9 @@ targets:
           - "**/.DS_Store"
           - "Info.plist"
           - "Afterna.entitlements"
+      - path: local/ConversationCore/Sources/ConversationCore
+        excludes:
+          - "**/.DS_Store"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.afterna.ios
