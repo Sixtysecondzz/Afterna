@@ -7,7 +7,7 @@ struct BannerAdView: View {
     var body: some View {
         GeometryReader { geo in
             let width = geo.size.width > 0 ? geo.size.width : UIScreen.main.bounds.width
-            let adSize = currentOrientationAnchoredAdaptiveBanner(width: width)
+            let adSize = GADCurrentOrientationAnchoredAdaptiveBannerAdSizeWithWidth(width)
             BannerViewRepresentable(adSize: adSize)
                 .frame(width: adSize.size.width, height: adSize.size.height)
                 .frame(maxWidth: .infinity)
@@ -17,17 +17,18 @@ struct BannerAdView: View {
 }
 
 private struct BannerViewRepresentable: UIViewRepresentable {
-    let adSize: AdSize
+    let adSize: GADAdSize
 
-    func makeUIView(context: Context) -> BannerView {
-        let banner = BannerView(adSize: adSize)
+    func makeUIView(context: Context) -> GADBannerView {
+        let banner = GADBannerView(adSize: adSize)
         banner.adUnitID = AdMobConfig.bannerUnitID
         banner.delegate = context.coordinator
-        banner.load(Request())
+        banner.rootViewController = UIKitPresenter.topViewController()
+        banner.load(GADRequest())
         return banner
     }
 
-    func updateUIView(_ uiView: BannerView, context: Context) {
+    func updateUIView(_ uiView: GADBannerView, context: Context) {
         // Reload if width/size changes significantly could be added later.
     }
 
@@ -35,12 +36,12 @@ private struct BannerViewRepresentable: UIViewRepresentable {
         Coordinator()
     }
 
-    final class Coordinator: NSObject, BannerViewDelegate {
-        func bannerViewDidReceiveAd(_ bannerView: BannerView) {
+    final class Coordinator: NSObject, GADBannerViewDelegate {
+        func bannerViewDidReceiveAd(_ bannerView: GADBannerView) {
             print("[AdMob] Banner loaded")
         }
 
-        func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: Error) {
+        func bannerView(_ bannerView: GADBannerView, didFailToReceiveAdWithError error: Error) {
             print("[AdMob] Banner failed: \(error.localizedDescription)")
         }
     }

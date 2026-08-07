@@ -7,8 +7,8 @@ import UIKit
 final class NativeAdManager: NSObject {
     static let shared = NativeAdManager()
 
-    private(set) var readyAds: [NativeAd] = []
-    private var adLoader: AdLoader?
+    private(set) var readyAds: [GADNativeAd] = []
+    private var adLoader: GADAdLoader?
     private var loading = false
     private let poolSize = 3
 
@@ -16,19 +16,18 @@ final class NativeAdManager: NSObject {
         guard !loading else { return }
         guard readyAds.count < poolSize else { return }
         loading = true
-        let loader = AdLoader(
+        let loader = GADAdLoader(
             adUnitID: AdMobConfig.nativeUnitID,
-            rootViewController: nil,
+            rootViewController: UIKitPresenter.topViewController(),
             adTypes: [.native],
             options: nil
         )
         loader.delegate = self
         adLoader = loader
-        loader.load(Request())
+        loader.load(GADRequest())
     }
 
-    /// Take one ready ad for a feed slot (may be nil if not loaded yet).
-    func dequeueAd() -> NativeAd? {
+    func dequeueAd() -> GADNativeAd? {
         guard !readyAds.isEmpty else {
             preload()
             return nil
@@ -39,8 +38,8 @@ final class NativeAdManager: NSObject {
     }
 }
 
-extension NativeAdManager: AdLoaderDelegate, NativeAdLoaderDelegate {
-    nonisolated func adLoader(_ adLoader: AdLoader, didReceive nativeAd: NativeAd) {
+extension NativeAdManager: GADAdLoaderDelegate, GADNativeAdLoaderDelegate {
+    nonisolated func adLoader(_ adLoader: GADAdLoader, didReceive nativeAd: GADNativeAd) {
         Task { @MainActor in
             self.readyAds.append(nativeAd)
             self.loading = false
@@ -51,7 +50,7 @@ extension NativeAdManager: AdLoaderDelegate, NativeAdLoaderDelegate {
         }
     }
 
-    nonisolated func adLoader(_ adLoader: AdLoader, didFailToReceiveAdWithError error: Error) {
+    nonisolated func adLoader(_ adLoader: GADAdLoader, didFailToReceiveAdWithError error: any Error) {
         Task { @MainActor in
             self.loading = false
             print("[AdMob] Native load failed: \(error.localizedDescription)")

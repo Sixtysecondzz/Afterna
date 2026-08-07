@@ -4,7 +4,7 @@ import UIKit
 
 /// In-feed native ad row styled to match Memories list cards.
 struct NativeFeedAdView: View {
-    @State private var ad: NativeAd?
+    @State private var ad: GADNativeAd?
 
     var body: some View {
         Group {
@@ -48,28 +48,28 @@ struct NativeFeedAdView: View {
 }
 
 private struct NativeAdRepresentable: UIViewRepresentable {
-    let ad: NativeAd
+    let ad: GADNativeAd
 
-    func makeUIView(context: Context) -> NativeAdView {
+    func makeUIView(context: Context) -> GADNativeAdView {
         let view = NativeAdCardView()
         view.apply(ad)
         return view
     }
 
-    func updateUIView(_ uiView: NativeAdView, context: Context) {
+    func updateUIView(_ uiView: GADNativeAdView, context: Context) {
         (uiView as? NativeAdCardView)?.apply(ad)
     }
 }
 
-/// Programmatic NativeAdView — no XIB required.
-final class NativeAdCardView: NativeAdView {
+/// Programmatic GADNativeAdView — no XIB required.
+final class NativeAdCardView: GADNativeAdView {
     private let sponsoredLabel = UILabel()
     private let headlineLabel = UILabel()
     private let bodyLabel = UILabel()
     private let advertiserLabel = UILabel()
     private let iconImageView = UIImageView()
     private let ctaButton = UIButton(type: .system)
-    private let media = MediaView()
+    private let media = GADMediaView()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -108,11 +108,17 @@ final class NativeAdCardView: NativeAdView {
             iconImageView.heightAnchor.constraint(equalToConstant: 48),
         ])
 
-        ctaButton.titleLabel?.font = .systemFont(ofSize: 13, weight: .semibold)
-        ctaButton.backgroundColor = UIColor(DesignTokens.accent)
-        ctaButton.setTitleColor(.white, for: .normal)
-        ctaButton.layer.cornerRadius = 8
-        ctaButton.contentEdgeInsets = UIEdgeInsets(top: 8, left: 12, bottom: 8, right: 12)
+        var config = UIButton.Configuration.filled()
+        config.baseBackgroundColor = UIColor(DesignTokens.accent)
+        config.baseForegroundColor = .white
+        config.cornerStyle = .medium
+        config.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12)
+        config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var outgoing = incoming
+            outgoing.font = .systemFont(ofSize: 13, weight: .semibold)
+            return outgoing
+        }
+        ctaButton.configuration = config
         ctaButton.isUserInteractionEnabled = false
 
         media.translatesAutoresizingMaskIntoConstraints = false
@@ -147,7 +153,7 @@ final class NativeAdCardView: NativeAdView {
         mediaView = media
     }
 
-    func apply(_ ad: NativeAd) {
+    func apply(_ ad: GADNativeAd) {
         headlineLabel.text = ad.headline
         bodyLabel.text = ad.body
         bodyLabel.isHidden = ad.body == nil
@@ -155,7 +161,7 @@ final class NativeAdCardView: NativeAdView {
         advertiserLabel.isHidden = ad.advertiser == nil
         iconImageView.image = ad.icon?.image
         iconImageView.isHidden = ad.icon == nil
-        ctaButton.setTitle(ad.callToAction ?? "Open", for: .normal)
+        ctaButton.configuration?.title = ad.callToAction ?? "Open"
         ctaButton.isHidden = ad.callToAction == nil
         media.mediaContent = ad.mediaContent
         let hasMedia = ad.mediaContent.hasVideoContent || ad.mediaContent.mainImage != nil

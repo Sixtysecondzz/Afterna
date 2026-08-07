@@ -1,21 +1,25 @@
 import UIKit
 
+@MainActor
 enum UIKitPresenter {
-    @MainActor
-    static func topViewController(
-        base: UIViewController? = UIApplication.shared.connectedScenes
-            .compactMap { ($0 as? UIWindowScene)?.keyWindow }
-            .first?
+    static func topViewController(base: UIViewController? = nil) -> UIViewController? {
+        let root = base ?? UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap(\.windows)
+            .first { $0.isKeyWindow }?
             .rootViewController
-    ) -> UIViewController? {
+        return topMost(from: root)
+    }
+
+    private static func topMost(from base: UIViewController?) -> UIViewController? {
         if let nav = base as? UINavigationController {
-            return topViewController(base: nav.visibleViewController)
+            return topMost(from: nav.visibleViewController)
         }
         if let tab = base as? UITabBarController {
-            return topViewController(base: tab.selectedViewController)
+            return topMost(from: tab.selectedViewController)
         }
         if let presented = base?.presentedViewController {
-            return topViewController(base: presented)
+            return topMost(from: presented)
         }
         return base
     }
