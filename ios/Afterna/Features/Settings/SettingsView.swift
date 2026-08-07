@@ -33,6 +33,8 @@ struct SettingsView: View {
                         ? "Guest"
                         : (AuthConfig.isSupabaseConfigured ? "Supabase" : "Local")
                 )
+                LabeledContent("API", value: APIConfig.baseURLString)
+                LabeledContent("Upload", value: container.usesMockUpload ? "Mock" : "Live")
             }
         }
         .navigationTitle("Settings")

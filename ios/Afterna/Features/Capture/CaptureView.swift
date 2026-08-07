@@ -195,7 +195,7 @@ struct CaptureView: View {
     }
 
     private func tickWorker() async {
-        guard let url = URL(string: (ProcessInfo.processInfo.environment["AFTERNA_API_BASE"] ?? "http://127.0.0.1:8787") + "/v1/worker/tick") else { return }
+        guard let url = URL(string: APIConfig.baseURLString + "/v1/worker/tick") else { return }
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         _ = try? await URLSession.shared.data(for: req)

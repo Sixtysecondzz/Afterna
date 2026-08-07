@@ -45,4 +45,4 @@ Follows [Google Mobile Ads iOS quick start](https://developers.google.com/admob/
 
 Login screen supports **Sign in with Apple** and **Continue with Google** (Supabase). Configure keys in `Afterna/Info.plist` — see [`supabase/README.md`](../supabase/README.md). Until Supabase is configured, use **Continue as Demo**.
 
-Microphone usage string is set via Info.plist keys. Default upload path uses mocks (`useMockUpload: true`).
+Microphone usage string is set via Info.plist keys. Live API defaults to `https://afterna.fly.dev` with `AFTERNA_USE_MOCK_UPLOAD=false`.

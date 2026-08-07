@@ -214,6 +214,11 @@
 			<string>3qcr597p9d.skadnetwork</string>
 		</dict>
 	</array>
+	<!-- Live API (Fly). Set AFTERNA_USE_MOCK_UPLOAD to true to force local mock upload. -->
+	<key>AFTERNA_API_BASE</key>
+	<string>https://afterna.fly.dev</string>
+	<key>AFTERNA_USE_MOCK_UPLOAD</key>
+	<false/>
 	<!-- Auth: Supabase keys + OAuth callback scheme (Google uses ASWebAuthenticationSession) -->
 	<key>SUPABASE_URL</key>
 	<string>https://njhvksxylqhqkshoedkq.supabase.co</string>

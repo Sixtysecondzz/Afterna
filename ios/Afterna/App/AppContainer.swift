@@ -15,7 +15,7 @@ final class AppContainer {
     let credits: CreditsWallet
     let memoryOrg: MemoryOrgStore
 
-    init(useMockUpload: Bool = true) {
+    init(useMockUpload: Bool? = nil) {
         let schema = Schema([
             ConversationEntity.self,
             TranscriptSegmentEntity.self,
@@ -29,7 +29,7 @@ final class AppContainer {
         let auth = AuthService()
         self.auth = auth
 
-        let base = URL(string: ProcessInfo.processInfo.environment["AFTERNA_API_BASE"] ?? "http://127.0.0.1:8787")!
+        let base = URL(string: APIConfig.baseURLString)!
         self.api = APIClient(baseURL: base, tokenStore: auth.tokenStore)
         self.flags = FeatureFlagStore()
         let defaults = RemoteConfig.offlineDefaults
@@ -39,8 +39,9 @@ final class AppContainer {
             welcomeCredits: AdMobConfig.welcomeCredits
         )
         self.memoryOrg = MemoryOrgStore(auth: auth, tokenStore: auth.tokenStore)
-        self.usesMockUpload = useMockUpload
-        self.uploadOutbox = useMockUpload ? MockUploading() : UploadOutbox(api: api)
+        let mock = useMockUpload ?? APIConfig.useMockUpload
+        self.usesMockUpload = mock
+        self.uploadOutbox = mock ? MockUploading() : UploadOutbox(api: api)
         self.audio = AVAudioCaptureEngine()
     }
 
