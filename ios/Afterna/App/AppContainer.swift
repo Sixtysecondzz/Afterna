@@ -25,10 +25,11 @@ final class AppContainer {
         let base = URL(string: ProcessInfo.processInfo.environment["AFTERNA_API_BASE"] ?? "http://127.0.0.1:8787")!
         self.api = APIClient(baseURL: base, tokenStore: auth.tokenStore)
         self.flags = FeatureFlagStore()
-        let remote = self.flags.current()
+        // FeatureFlagStore is an actor — use offline defaults here; refresh overlays later.
+        let defaults = RemoteConfig.offlineDefaults
         self.credits = CreditsWallet(
-            rewardMinutes: remote.rewardMinutes,
-            maxDailyRewards: remote.maxDailyRewards,
+            rewardMinutes: defaults.rewardMinutes,
+            maxDailyRewards: defaults.maxDailyRewards,
             welcomeCredits: AdMobConfig.welcomeCredits
         )
         self.usesMockUpload = useMockUpload
