@@ -11,8 +11,7 @@ enum AdMobConfig {
     static let productionInterstitial = "ca-app-pub-9350266309525886/6837798679"
     static let productionBanner = "ca-app-pub-9350266309525886/3320959568"
     static let productionRewarded = "ca-app-pub-9350266309525886/8233660880"
-    /// Native Advanced unit — set `GADNativeAdUnitID` in Info.plist when created in AdMob.
-    static let productionNative = "ca-app-pub-9350266309525886/REPLACE_NATIVE"
+    static let productionNative = "ca-app-pub-9350266309525886/5314099488"
 
     static let testAppOpen = "ca-app-pub-3940256099942544/5575463023"
     static let testInterstitial = "ca-app-pub-3940256099942544/4411468910"

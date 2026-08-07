@@ -10,7 +10,7 @@
 	<string>ca-app-pub-9350266309525886/8233660880</string>
 	<!-- Native Advanced unit id — paste when created in AdMob (falls back to Google sample). -->
 	<key>GADNativeAdUnitID</key>
-	<string></string>
+	<string>ca-app-pub-9350266309525886/5314099488</string>
 	<key>SKAdNetworkItems</key>
 	<array>
 		<dict>
