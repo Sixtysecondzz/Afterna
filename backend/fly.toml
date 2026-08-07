@@ -1,0 +1,41 @@
+# Deploy from the backend folder only:
+#   cd backend
+#   fly launch --copy-config --no-deploy   # first time if needed
+#   fly secrets set ...
+#   fly deploy
+#
+# App name can be changed; update APP_BASE_URL to match.
+
+app = "afterna"
+primary_region = "syd"
+
+[build]
+
+[env]
+  PORT = "8080"
+  FIXTURE_MODE = "false"
+  NODE_ENV = "production"
+
+[processes]
+  app = "npx tsx src/index.ts"
+  worker = "npx tsx src/worker.ts"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1
+  processes = ["app"]
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1
+  processes = ["worker"]
