@@ -20,7 +20,9 @@ rm -rf Afterna.xcodeproj
 open Afterna.xcodeproj
 ```
 
-First open: allow Xcode to resolve the **GoogleMobileAds** Swift package, then pick an iPhone Simulator → Run.
+First open: allow Xcode to resolve the **GoogleMobileAds** Swift package, then pick an iPhone (device preferred) → Run.
+
+**Pilot / TestFlight:** see [`docs/PILOT.md`](../docs/PILOT.md).
 
 ### AdMob
 

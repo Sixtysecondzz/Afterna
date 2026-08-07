@@ -30,6 +30,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.afterna.ios
         PRODUCT_NAME: Afterna
+        # Apple Developer Team (Sign in with Apple / device runs / Archive)
+        DEVELOPMENT_TEAM: V5GB46FZ48
         SWIFT_VERSION: "5.0"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_FILE: Afterna/Info.plist
