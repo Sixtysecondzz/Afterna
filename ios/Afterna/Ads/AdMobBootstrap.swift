@@ -12,6 +12,7 @@ enum AdMobBootstrap {
             await AppOpenAdManager.shared.loadAd()
             await InterstitialAdManager.shared.loadAd()
             await RewardedAdManager.shared.loadAd()
+            NativeAdManager.shared.preload()
         }
     }
 }

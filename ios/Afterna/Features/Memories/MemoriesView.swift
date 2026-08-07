@@ -27,6 +27,21 @@ struct MemoriesView: View {
         }
     }
 
+    /// Memories with native ads every `nativeFeedInterval` rows.
+    private var feedItems: [MemoryFeedItem] {
+        let interval = max(AdMobConfig.nativeFeedInterval, 2)
+        var items: [MemoryFeedItem] = []
+        var nativeSlot = 0
+        for (index, conversation) in filtered.enumerated() {
+            items.append(.memory(conversation))
+            if (index + 1) % interval == 0 {
+                items.append(.nativeAd(nativeSlot))
+                nativeSlot += 1
+            }
+        }
+        return items
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             folderChips
@@ -41,38 +56,44 @@ struct MemoriesView: View {
                         )
                     } else {
                         List {
-                            ForEach(filtered) { item in
-                                NavigationLink {
-                                    ConversationDetailView(conversation: item)
-                                        .onAppear {
-                                            InterstitialAdManager.shared.showOnMemoryOpenIfNeeded()
+                            ForEach(feedItems) { entry in
+                                switch entry {
+                                case .memory(let item):
+                                    NavigationLink {
+                                        ConversationDetailView(conversation: item)
+                                            .onAppear {
+                                                InterstitialAdManager.shared.showOnMemoryOpenIfNeeded()
+                                            }
+                                    } label: {
+                                        memoryRow(item)
+                                    }
+                                    .listRowBackground(DesignTokens.mist.opacity(0.35))
+                                    .swipeActions(edge: .leading) {
+                                        Button {
+                                            Task { await container.memoryOrg.togglePin(item, modelContext: modelContext) }
+                                        } label: {
+                                            Label(item.isPinned ? "Unpin" : "Pin", systemImage: item.isPinned ? "pin.slash" : "pin")
                                         }
-                                } label: {
-                                    memoryRow(item)
-                                }
-                                .listRowBackground(DesignTokens.mist.opacity(0.35))
-                                .swipeActions(edge: .leading) {
-                                    Button {
-                                        Task { await container.memoryOrg.togglePin(item, modelContext: modelContext) }
-                                    } label: {
-                                        Label(item.isPinned ? "Unpin" : "Pin", systemImage: item.isPinned ? "pin.slash" : "pin")
+                                        .tint(DesignTokens.accent)
                                     }
-                                    .tint(DesignTokens.accent)
-                                }
-                                .swipeActions(edge: .trailing) {
-                                    Button {
-                                        assignTarget = item
-                                    } label: {
-                                        Label("Folder", systemImage: "folder")
+                                    .swipeActions(edge: .trailing) {
+                                        Button {
+                                            assignTarget = item
+                                        } label: {
+                                            Label("Folder", systemImage: "folder")
+                                        }
                                     }
-                                }
-                                .contextMenu {
-                                    Button {
-                                        Task { await container.memoryOrg.togglePin(item, modelContext: modelContext) }
-                                    } label: {
-                                        Label(item.isPinned ? "Unpin" : "Pin", systemImage: item.isPinned ? "pin.slash.fill" : "pin.fill")
+                                    .contextMenu {
+                                        Button {
+                                            Task { await container.memoryOrg.togglePin(item, modelContext: modelContext) }
+                                        } label: {
+                                            Label(item.isPinned ? "Unpin" : "Pin", systemImage: item.isPinned ? "pin.slash.fill" : "pin.fill")
+                                        }
+                                        Button("Move to folder…") { assignTarget = item }
                                     }
-                                    Button("Move to folder…") { assignTarget = item }
+                                case .nativeAd(let slot):
+                                    NativeFeedAdView()
+                                        .id("native-\(slot)")
                                 }
                             }
                         }
@@ -100,6 +121,8 @@ struct MemoriesView: View {
             AssignFolderSheet(conversation: conv, folders: folders)
         }
         .task {
+            SampleDataSeeder.seedIfNeeded(modelContext: modelContext)
+            NativeAdManager.shared.preload()
             await container.memoryOrg.refreshAll(modelContext: modelContext)
         }
         .refreshable {
@@ -168,6 +191,18 @@ struct MemoriesView: View {
     private func formatDuration(_ ms: Int) -> String {
         let s = max(ms / 1000, 0)
         return String(format: "%d:%02d", s / 60, s % 60)
+    }
+}
+
+private enum MemoryFeedItem: Identifiable {
+    case memory(ConversationEntity)
+    case nativeAd(Int)
+
+    var id: String {
+        switch self {
+        case .memory(let c): return "m-\(c.id.uuidString)"
+        case .nativeAd(let slot): return "ad-\(slot)"
+        }
     }
 }
 

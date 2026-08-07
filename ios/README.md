@@ -29,7 +29,8 @@ Follows [Google Mobile Ads iOS quick start](https://developers.google.com/admob/
 | Format | Production unit | Placement |
 |--------|-----------------|-----------|
 | App open | `…/4087246329` | Warm foreground |
-| Interstitial (“native interstitial”) | `…/6837798679` | After capture saved; every 5th memory open |
+| Interstitial | `…/6837798679` | After capture saved; every 5th memory open |
+| Native advanced (in-feed) | set `GADNativeAdUnitID` (sample fallback) | Every 5 Memories rows |
 | Banner | `…/3320959568` | Memories + Search footers |
 
 **Capture / recording is ad-free.**

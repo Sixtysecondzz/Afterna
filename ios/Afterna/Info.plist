@@ -8,6 +8,9 @@
 	<!-- Rewarded ad UNIT id (must use / not ~). Leave unset to use Google sample rewarded unit. -->
 	<key>GADRewardedAdUnitID</key>
 	<string>ca-app-pub-9350266309525886/8233660880</string>
+	<!-- Native Advanced unit id — paste when created in AdMob (falls back to Google sample). -->
+	<key>GADNativeAdUnitID</key>
+	<string></string>
 	<key>SKAdNetworkItems</key>
 	<array>
 		<dict>
