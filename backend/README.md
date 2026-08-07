@@ -15,12 +15,13 @@ With `FIXTURE_MODE=true` (default in `.env.example`), transcription/extract/ask 
 
 ## Deploy (Fly.io) — monorepo
 
-Fly must be run from **`backend/`**, not the repo root (the root has no Node app / Dockerfile).
+There is a **root** `Dockerfile` + `fly.toml` so Fly’s GitHub / “Prepare files for launch” flow works from the repo root (it only copies `backend/` into the image).
 
 ```bash
-cd backend
+# From the Afterna repo ROOT (not backend/)
+git pull origin master
 fly auth login
-fly launch --copy-config --no-deploy   # uses existing fly.toml; skip if app already exists
+fly launch --copy-config --no-deploy
 fly secrets set \
   SUPABASE_URL="https://YOUR_PROJECT.supabase.co" \
   SUPABASE_ANON_KEY="..." \
@@ -36,6 +37,8 @@ fly deploy
 Health check: `https://afterna.fly.dev/health`
 
 Point iOS `AFTERNA_API_BASE` at that URL when leaving mock upload.
+
+Optional: deploy from `backend/` using `backend/fly.toml` + `backend/Dockerfile` instead.
 
 ## Key routes
 

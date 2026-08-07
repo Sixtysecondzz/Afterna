@@ -1,0 +1,15 @@
+ios
+web
+docs
+supabase
+contracts
+.agents
+.cursor
+.git
+**/.DS_Store
+**/node_modules
+backend/node_modules
+backend/.env
+backend/.env.*
+*.md
+skills-lock.json
