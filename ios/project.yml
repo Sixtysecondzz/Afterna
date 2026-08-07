@@ -3,6 +3,11 @@ options:
   bundleIdPrefix: app.afterna
   deploymentTarget:
     iOS: "17.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    TARGETED_DEVICE_FAMILY: "1"
 packages:
   ConversationCore:
     path: .
@@ -11,12 +16,26 @@ targets:
     type: application
     platform: iOS
     sources:
-      - Afterna
+      - path: Afterna
+        excludes:
+          - "**/.DS_Store"
     settings:
-      PRODUCT_BUNDLE_IDENTIFIER: app.afterna.ios
-      INFOPLIST_KEY_NSMicrophoneUsageDescription: Afterna records conversations you choose to capture.
-      INFOPLIST_KEY_UILaunchScreen_Generation: YES
-      SWIFT_STRICT_CONCURRENCY: complete
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.afterna.ios
+        PRODUCT_NAME: Afterna
+        SWIFT_VERSION: "5.0"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Afterna
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: Afterna records conversations you choose to capture.
+        CURRENT_PROJECT_VERSION: "1"
+        MARKETING_VERSION: "0.1.0"
+        TARGETED_DEVICE_FAMILY: "1"
+        IPHONEOS_DEPLOYMENT_TARGET: "17.0"
     dependencies:
       - package: ConversationCore
         product: ConversationCore
+    scheme:
+      testTargets: []
