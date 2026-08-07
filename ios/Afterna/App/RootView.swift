@@ -21,7 +21,13 @@ struct RootView: View {
         .task {
             await container.auth.bootstrap()
             if container.auth.status == .signedIn {
+                container.bindCreditsToCurrentUser()
                 await container.flags.refresh(using: container.api)
+            }
+        }
+        .onChange(of: container.auth.status) { _, status in
+            if status == .signedIn {
+                container.bindCreditsToCurrentUser()
             }
         }
     }
@@ -45,11 +51,17 @@ struct RootView: View {
             }
             .tabItem { Label("Search", systemImage: "magnifyingglass") }
             .tag(AppTab.search)
+
+            NavigationStack {
+                SettingsView()
+            }
+            .tabItem { Label("Settings", systemImage: "gearshape") }
+            .tag(AppTab.settings)
         }
         .tint(DesignTokens.accent)
     }
 }
 
 enum AppTab: Hashable {
-    case memories, capture, search
+    case memories, capture, search, settings
 }

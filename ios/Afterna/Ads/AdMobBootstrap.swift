@@ -11,6 +11,7 @@ enum AdMobBootstrap {
         Task {
             await AppOpenAdManager.shared.loadAd()
             await InterstitialAdManager.shared.loadAd()
+            await RewardedAdManager.shared.loadAd()
         }
     }
 }

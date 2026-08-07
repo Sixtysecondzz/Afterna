@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(AppContainer.self) private var container
+    @State private var showCredits = false
 
     var body: some View {
         List {
@@ -12,6 +13,15 @@ struct SettingsView: View {
                 }
                 Button("Sign out", role: .destructive) {
                     Task { await container.auth.signOut() }
+                }
+            }
+
+            Section("Credits") {
+                LabeledContent("Balance", value: "\(container.credits.creditBalance) credits")
+                LabeledContent("Time left", value: "\(container.credits.availableMinutes) min")
+                LabeledContent("Per credit", value: "\(container.credits.minutesPerCredit) min")
+                Button("Earn credit (watch ad)") {
+                    showCredits = true
                 }
             }
 
@@ -26,5 +36,8 @@ struct SettingsView: View {
             }
         }
         .navigationTitle("Settings")
+        .sheet(isPresented: $showCredits) {
+            CreditsSheet()
+        }
     }
 }

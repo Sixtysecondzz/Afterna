@@ -36,9 +36,9 @@ public struct RemoteConfig: Codable, Sendable, Equatable {
     }
 
     public static let offlineDefaults = RemoteConfig(
-        baseFreeMinutes: 60,
-        rewardMinutes: 5,
-        maxDailyRewards: 3,
+        baseFreeMinutes: 0,
+        rewardMinutes: 10,
+        maxDailyRewards: 6,
         bannerEnabled: false,
         nativeFeedInterval: 8,
         bannerRefreshInterval: 60,

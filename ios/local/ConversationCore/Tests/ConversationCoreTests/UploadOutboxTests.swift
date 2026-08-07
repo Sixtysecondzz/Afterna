@@ -16,7 +16,8 @@ final class UploadOutboxTests: XCTestCase {
     }
 
     func testOfflineConfigDefaults() {
-        XCTAssertEqual(RemoteConfig.offlineDefaults.baseFreeMinutes, 60)
+        XCTAssertEqual(RemoteConfig.offlineDefaults.baseFreeMinutes, 0)
+        XCTAssertEqual(RemoteConfig.offlineDefaults.rewardMinutes, 10)
         XCTAssertTrue(RemoteConfig.offlineDefaults.featureFlags.askAI)
     }
 }

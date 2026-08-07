@@ -9,6 +9,7 @@ struct CaptureView: View {
     @State private var statusText = "Ready when you are"
     @State private var processingItem: OutboxItem?
     @State private var pulse = false
+    @State private var showCredits = false
 
     var body: some View {
         ZStack {
@@ -24,6 +25,10 @@ struct CaptureView: View {
                     .font(DesignTokens.displayFont)
                     .foregroundStyle(DesignTokens.ink)
                     .accessibilityAddTraits(.isHeader)
+
+                Text("\(container.credits.creditBalance) credits · \(container.credits.availableMinutes) min left")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.secondary)
 
                 Text(statusText)
                     .font(DesignTokens.bodyFont)
@@ -47,6 +52,14 @@ struct CaptureView: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel(isRecording ? "Stop recording" : "Start recording")
 
+                if !isRecording {
+                    Button("Get more credits") {
+                        showCredits = true
+                    }
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(DesignTokens.accent)
+                }
+
                 if let processingItem {
                     ProcessingStatusView(item: processingItem)
                         .transition(.opacity.combined(with: .move(edge: .bottom)))
@@ -55,6 +68,9 @@ struct CaptureView: View {
             .padding()
         }
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showCredits) {
+            CreditsSheet()
+        }
         .onAppear {
             withAnimation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true)) {
                 pulse = true
@@ -68,6 +84,7 @@ struct CaptureView: View {
             do {
                 let result = try container.audio.stop()
                 isRecording = false
+                container.credits.consume(durationMs: result.durationMs)
                 statusText = "Saving locally…"
                 let checksum: String
                 if FileManager.default.fileExists(atPath: result.url.path) {
@@ -125,6 +142,11 @@ struct CaptureView: View {
                 isRecording = false
             }
         } else {
+            guard container.credits.canStartRecording() else {
+                statusText = "Out of credits — watch an ad to earn more"
+                showCredits = true
+                return
+            }
             let allowed = await container.audio.requestPermission()
             guard allowed else {
                 statusText = "Microphone permission is required"

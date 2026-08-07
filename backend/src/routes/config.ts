@@ -6,9 +6,9 @@ export const configRoutes = new Hono();
 
 configRoutes.get("/v1/config", (c) => {
   const body: RemoteConfig = {
-    base_free_minutes: config.baseFreeMinutes,
-    reward_minutes: 5,
-    max_daily_rewards: 3,
+    base_free_minutes: 0,
+    reward_minutes: 10,
+    max_daily_rewards: 6,
     banner_enabled: false,
     native_feed_interval: 8,
     banner_refresh_interval: 60,

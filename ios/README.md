@@ -36,6 +36,7 @@ Follows [Google Mobile Ads iOS quick start](https://developers.google.com/admob/
 
 - Uses **production AdMob units** (`AdMobConfig.useTestAds = false`). Set `true` only for Google sample test IDs.
 - App ID is set in `Afterna/Info.plist`: `ca-app-pub-9350266309525886~6797170145`.
+- **Rewarded** credits: set `GADRewardedAdUnitID` in Info.plist to your unit id (`ca-app-pub-…/…`). Guests/new users get **5 credits** (1 credit = **10 min**).
 
 ### Auth (Apple + Google)
 
