@@ -1,4 +1,6 @@
+import CryptoKit
 import Foundation
+import Security
 
 struct SupabaseSession: Codable, Sendable {
     var accessToken: String
@@ -62,7 +64,7 @@ enum AnyCodableValue: Codable, Sendable {
     }
 }
 
-/// Lightweight Supabase Auth client (ID-token sign-in) — no supabase-swift SPM dependency.
+/// Lightweight Supabase Auth client — no supabase-swift / GoogleSignIn SPM dependency.
 actor SupabaseAuthClient {
     private let baseURL: URL
     private let anonKey: String
@@ -72,6 +74,45 @@ actor SupabaseAuthClient {
         self.baseURL = baseURL
         self.anonKey = anonKey
         self.session = session
+    }
+
+    func oauthAuthorizeURL(provider: String, redirectTo: String, codeChallenge: String) throws -> URL {
+        var comps = URLComponents(url: baseURL.appending(path: "auth/v1/authorize"), resolvingAgainstBaseURL: false)!
+        comps.queryItems = [
+            URLQueryItem(name: "provider", value: provider),
+            URLQueryItem(name: "redirect_to", value: redirectTo),
+            URLQueryItem(name: "code_challenge", value: codeChallenge),
+            URLQueryItem(name: "code_challenge_method", value: "S256"),
+        ]
+        guard let url = comps.url else {
+            throw AuthAPIError.http(0, "Could not build OAuth authorize URL")
+        }
+        return url
+    }
+
+    func exchangeOAuthCode(callbackURL: URL, codeVerifier: String) async throws -> SupabaseSession {
+        guard let code = Self.queryItem(named: "code", in: callbackURL) else {
+            let err = Self.queryItem(named: "error_description", in: callbackURL)
+                ?? Self.queryItem(named: "error", in: callbackURL)
+                ?? "Missing auth code in OAuth callback"
+            throw AuthAPIError.http(0, err)
+        }
+
+        var comps = URLComponents(url: baseURL.appending(path: "auth/v1/token"), resolvingAgainstBaseURL: false)!
+        comps.queryItems = [URLQueryItem(name: "grant_type", value: "pkce")]
+        var request = URLRequest(url: comps.url!)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(anonKey, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer \(anonKey)", forHTTPHeaderField: "Authorization")
+        request.httpBody = try JSONEncoder().encode([
+            "auth_code": code,
+            "code_verifier": codeVerifier,
+        ])
+
+        let (data, response) = try await session.data(for: request)
+        try Self.throwIfNeeded(response, data: data)
+        return try JSONDecoder().decode(SupabaseSession.self, from: data)
     }
 
     func signInWithIdToken(provider: String, idToken: String, accessToken: String? = nil) async throws -> SupabaseSession {
@@ -134,6 +175,24 @@ actor SupabaseAuthClient {
             throw AuthAPIError.http(http.statusCode, message)
         }
     }
+
+    private static func queryItem(named name: String, in url: URL) -> String? {
+        if let comps = URLComponents(url: url, resolvingAgainstBaseURL: false),
+           let value = comps.queryItems?.first(where: { $0.name == name })?.value {
+            return value
+        }
+        // Some providers return params in the fragment.
+        guard let fragment = url.fragment else { return nil }
+        return fragment
+            .split(separator: "&")
+            .compactMap { pair -> (String, String)? in
+                let parts = pair.split(separator: "=", maxSplits: 1).map(String.init)
+                guard parts.count == 2 else { return nil }
+                return (parts[0], parts[1].removingPercentEncoding ?? parts[1])
+            }
+            .first { $0.0 == name }?
+            .1
+    }
 }
 
 enum AuthAPIError: LocalizedError {
@@ -143,5 +202,32 @@ enum AuthAPIError: LocalizedError {
         case .http(let code, let body):
             return "Auth error (\(code)): \(body)"
         }
+    }
+}
+
+enum PKCE {
+    struct Pair: Sendable {
+        var verifier: String
+        var challenge: String
+    }
+
+    static func generate() -> Pair {
+        let verifier = randomString(length: 64)
+        let challenge = base64URL(Data(SHA256.hash(data: Data(verifier.utf8))))
+        return Pair(verifier: verifier, challenge: challenge)
+    }
+
+    private static func randomString(length: Int) -> String {
+        let alphabet = Array("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~")
+        var bytes = [UInt8](repeating: 0, count: length)
+        _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+        return String(bytes.map { alphabet[Int($0) % alphabet.count] })
+    }
+
+    private static func base64URL(_ data: Data) -> String {
+        data.base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
     }
 }

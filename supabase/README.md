@@ -23,14 +23,11 @@ supabase db reset
 
 ### Google (Gmail)
 
-1. [Google Cloud Console](https://console.cloud.google.com/) → create OAuth consent screen.
-2. Create **iOS** OAuth client ID (bundle `app.afterna.ios`) and a **Web** client ID.
-3. Supabase → Authentication → Providers → **Google**:
-   - Paste Web + iOS client IDs (comma-separated) under Client IDs.
-   - Enable **Skip nonce check** for native Google Sign-In.
-4. In `ios/Afterna/Info.plist`:
-   - `GIDClientID` = iOS client ID (`….apps.googleusercontent.com`)
-   - `CFBundleURLSchemes` = reversed client ID (`com.googleusercontent.apps.…`)
+1. [Google Cloud Console](https://console.cloud.google.com/) → OAuth consent screen + **Web** OAuth client (used by Supabase).
+2. Supabase → Authentication → Providers → **Google**: enable, paste Web client ID + secret.
+3. Supabase → Authentication → URL Configuration → Redirect URLs, add:
+   - `app.afterna.ios://auth-callback`
+4. iOS uses **ASWebAuthenticationSession** (no GoogleSignIn SPM). Scheme `app.afterna.ios` is in `Info.plist`.
 
 Until keys exist, the app shows **Continue as Demo** (`Authorization: Bearer dev-user` for the local API).
 

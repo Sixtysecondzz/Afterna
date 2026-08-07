@@ -12,9 +12,6 @@ packages:
   GoogleMobileAds:
     url: https://github.com/googleads/swift-package-manager-google-mobile-ads.git
     from: "12.0.0"
-  GoogleSignIn:
-    url: https://github.com/google/GoogleSignIn-iOS.git
-    from: "8.0.0"
 targets:
   Afterna:
     type: application
@@ -51,7 +48,5 @@ targets:
     dependencies:
       - package: GoogleMobileAds
         product: GoogleMobileAds
-      - package: GoogleSignIn
-        product: GoogleSignIn
     scheme:
       testTargets: []

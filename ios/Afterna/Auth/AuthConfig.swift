@@ -15,21 +15,14 @@ enum AuthConfig {
             ?? ""
     }
 
-    /// Google Cloud iOS OAuth client ID (…apps.googleusercontent.com)
-    static var googleIOSClientID: String {
-        Bundle.main.object(forInfoDictionaryKey: "GIDClientID") as? String
-            ?? ProcessInfo.processInfo.environment["GID_CLIENT_ID"]
-            ?? ""
-    }
+    /// Custom URL scheme used for Supabase OAuth return (must match Info.plist + Supabase redirect allow-list).
+    static var oauthCallbackScheme: String { "app.afterna.ios" }
+
+    static var oauthRedirectURL: String { "\(oauthCallbackScheme)://auth-callback" }
 
     static var isSupabaseConfigured: Bool {
         let url = supabaseURL.trimmingCharacters(in: .whitespacesAndNewlines)
         let key = supabaseAnonKey.trimmingCharacters(in: .whitespacesAndNewlines)
         return url.hasPrefix("https://") && !key.isEmpty && !key.contains("YOUR_")
-    }
-
-    static var isGoogleConfigured: Bool {
-        let id = googleIOSClientID.trimmingCharacters(in: .whitespacesAndNewlines)
-        return id.contains("apps.googleusercontent.com") && !id.contains("YOUR_")
     }
 }
