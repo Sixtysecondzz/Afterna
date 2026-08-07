@@ -34,7 +34,7 @@ final class AuthService {
         guard let client else {
             if let token = await tokenStore.accessToken(), !token.isEmpty {
                 status = .signedIn
-                displayName = token == "dev-user" ? "Demo User" : "Signed in"
+                displayName = token == "dev-user" ? "Guest" : "Signed in"
             } else {
                 status = .signedOut
             }
@@ -116,9 +116,9 @@ final class AuthService {
         }
     }
 
-    func continueAsDemo() async {
+    func continueAsGuest() async {
         tokenStore.save(accessToken: "dev-user", refreshToken: nil, userId: "demo")
-        displayName = "Demo User"
+        displayName = "Guest"
         email = nil
         userId = "demo"
         status = .signedIn

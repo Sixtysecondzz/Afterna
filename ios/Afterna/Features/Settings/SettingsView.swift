@@ -17,7 +17,12 @@ struct SettingsView: View {
 
             Section("About") {
                 LabeledContent("App", value: "Afterna")
-                LabeledContent("Auth", value: AuthConfig.isSupabaseConfigured ? "Supabase" : "Demo")
+                LabeledContent(
+                    "Auth",
+                    value: container.auth.userId == "demo"
+                        ? "Guest"
+                        : (AuthConfig.isSupabaseConfigured ? "Supabase" : "Local")
+                )
             }
         }
         .navigationTitle("Settings")

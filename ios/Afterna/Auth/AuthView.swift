@@ -63,14 +63,13 @@ struct AuthView: View {
                     .buttonStyle(.plain)
                     .disabled(busy)
 
-                    if !AuthConfig.isSupabaseConfigured {
-                        Button("Continue as Demo") {
-                            Task { await run { await container.auth.continueAsDemo() } }
-                        }
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(DesignTokens.accent)
-                        .padding(.top, 4)
+                    Button("Continue as Guest") {
+                        Task { await run { await container.auth.continueAsGuest() } }
                     }
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(DesignTokens.accent)
+                    .padding(.top, 4)
+                    .disabled(busy)
                 }
                 .padding(.horizontal, 28)
 
@@ -86,13 +85,11 @@ struct AuthView: View {
                         .padding(.horizontal, 28)
                 }
 
-                if !AuthConfig.isSupabaseConfigured {
-                    Text("Supabase keys not set yet — Demo mode talks to the local API as `dev-user`.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 32)
-                }
+                Text("Guest mode stays on this device. Sign in anytime to sync.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
 
                 Spacer()
                 Spacer()
