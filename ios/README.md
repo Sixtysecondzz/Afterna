@@ -35,6 +35,6 @@ Follows [Google Mobile Ads iOS quick start](https://developers.google.com/admob/
 **Capture / recording is ad-free.**
 
 - DEBUG builds use **Google test ad units** (`AdMobConfig.useTestAds = true`) so you don’t risk policy strikes.
-- `Afterna/Info.plist` currently has Google’s **sample App ID**. Before shipping, set your real App ID (`ca-app-pub-9350266309525886~…` from AdMob → Apps → App settings) and set `useTestAds = false` for Release.
+- App ID is set in `Afterna/Info.plist`: `ca-app-pub-9350266309525886~6797170145`. Set `AdMobConfig.useTestAds = false` for Release to serve your production units.
 
 Microphone usage string is set via Info.plist keys. Default upload path uses mocks (`useMockUpload: true`).

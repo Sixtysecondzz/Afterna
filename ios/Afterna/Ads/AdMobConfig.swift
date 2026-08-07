@@ -6,8 +6,8 @@ import Foundation
 /// (format `ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY` from AdMob → Apps → App settings).
 /// Unit IDs alone are not enough for `GADApplicationIdentifier`.
 enum AdMobConfig {
-    /// Paste your real App ID (with `~`) before shipping production ads.
-    static let applicationID = "ca-app-pub-9350266309525886~REPLACE_ME"
+    /// AdMob App ID (GADApplicationIdentifier).
+    static let applicationID = "ca-app-pub-9350266309525886~6797170145"
 
     /// Google sample App ID — used while `useTestAds == true` so Simulator testing is safe.
     static let testApplicationID = "ca-app-pub-3940256099942544~1458002511"

@@ -3,8 +3,8 @@
 <plist version="1.0">
 <dict>
 	<key>GADApplicationIdentifier</key>
-	<!-- DEBUG/testing: Google sample App ID. Before production, replace with ca-app-pub-9350266309525886~YOUR_APP_ID -->
-	<string>ca-app-pub-3940256099942544~1458002511</string>
+	<!-- AdMob App ID for Afterna -->
+	<string>ca-app-pub-9350266309525886~6797170145</string>
 	<key>SKAdNetworkItems</key>
 	<array>
 		<dict>
