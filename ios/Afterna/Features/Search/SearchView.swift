@@ -6,26 +6,33 @@ struct SearchView: View {
     @State private var query = ""
 
     var body: some View {
-        ZStack {
-            DesignTokens.paper.ignoresSafeArea()
-            List {
-                ForEach(filtered) { item in
-                    NavigationLink {
-                        ConversationDetailView(conversation: item)
-                    } label: {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(item.title).font(DesignTokens.titleFont)
-                            if let hit = item.segments.first(where: { $0.text.localizedCaseInsensitiveContains(query) }) {
-                                Text(hit.text)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(2)
+        VStack(spacing: 0) {
+            ZStack {
+                DesignTokens.paper.ignoresSafeArea()
+                List {
+                    ForEach(filtered) { item in
+                        NavigationLink {
+                            ConversationDetailView(conversation: item)
+                                .onAppear {
+                                    InterstitialAdManager.shared.showOnMemoryOpenIfNeeded()
+                                }
+                        } label: {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(item.title).font(DesignTokens.titleFont)
+                                if let hit = item.segments.first(where: { $0.text.localizedCaseInsensitiveContains(query) }) {
+                                    Text(hit.text)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(2)
+                                }
                             }
                         }
                     }
                 }
+                .scrollContentBackground(.hidden)
             }
-            .scrollContentBackground(.hidden)
+            BannerAdView()
+                .background(DesignTokens.paper)
         }
         .navigationTitle("Search")
         .searchable(text: $query, prompt: "Search memories")

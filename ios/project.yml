@@ -8,6 +8,10 @@ settings:
   base:
     SWIFT_VERSION: "5.0"
     TARGETED_DEVICE_FAMILY: "1"
+packages:
+  GoogleMobileAds:
+    url: https://github.com/googleads/swift-package-manager-google-mobile-ads.git
+    from: "12.0.0"
 targets:
   Afterna:
     type: application
@@ -16,7 +20,7 @@ targets:
       - path: Afterna
         excludes:
           - "**/.DS_Store"
-      # Compile ConversationCore into the app target (avoids XcodeGen local-SPM bugs)
+          - "Info.plist"
       - path: local/ConversationCore/Sources/ConversationCore
         excludes:
           - "**/.DS_Store"
@@ -26,6 +30,7 @@ targets:
         PRODUCT_NAME: Afterna
         SWIFT_VERSION: "5.0"
         GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: Afterna/Info.plist
         INFOPLIST_KEY_CFBundleDisplayName: Afterna
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
@@ -35,5 +40,9 @@ targets:
         MARKETING_VERSION: "0.1.0"
         TARGETED_DEVICE_FAMILY: "1"
         IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+        OTHER_LDFLAGS: ["$(inherited)", "-ObjC"]
+    dependencies:
+      - package: GoogleMobileAds
+        product: GoogleMobileAds
     scheme:
       testTargets: []

@@ -117,6 +117,8 @@ struct CaptureView: View {
                     ]
                     try? modelContext.save()
                     statusText = "Ready — memory saved"
+                    // Natural break after capture — never during recording.
+                    InterstitialAdManager.shared.showAfterCaptureSaved()
                 }
             } catch {
                 statusText = "Could not finish recording: \(error.localizedDescription)"
