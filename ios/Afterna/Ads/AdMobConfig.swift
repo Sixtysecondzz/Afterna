@@ -20,12 +20,8 @@ enum AdMobConfig {
     static let testInterstitial = "ca-app-pub-3940256099942544/4411468910"
     static let testBanner = "ca-app-pub-3940256099942544/2435281174"
 
-    /// DEBUG defaults to test ads to avoid accidental invalid traffic / policy strikes.
-    #if DEBUG
-    static var useTestAds = true
-    #else
+    /// Production AdMob units (set `true` only when intentionally testing with Google sample IDs).
     static var useTestAds = false
-    #endif
 
     static var appOpenUnitID: String { useTestAds ? testAppOpen : productionAppOpen }
     static var interstitialUnitID: String { useTestAds ? testInterstitial : productionInterstitial }

@@ -34,8 +34,8 @@ Follows [Google Mobile Ads iOS quick start](https://developers.google.com/admob/
 
 **Capture / recording is ad-free.**
 
-- DEBUG builds use **Google test ad units** (`AdMobConfig.useTestAds = true`) so you don’t risk policy strikes.
-- App ID is set in `Afterna/Info.plist`: `ca-app-pub-9350266309525886~6797170145`. Set `AdMobConfig.useTestAds = false` for Release to serve your production units.
+- Uses **production AdMob units** (`AdMobConfig.useTestAds = false`). Set `true` only for Google sample test IDs.
+- App ID is set in `Afterna/Info.plist`: `ca-app-pub-9350266309525886~6797170145`.
 
 ### Auth (Apple + Google)
 
