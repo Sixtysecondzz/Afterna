@@ -44,6 +44,15 @@ struct MemoriesView: View {
                 .background(DesignTokens.paper)
         }
         .navigationTitle("Memories")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink {
+                    SettingsView()
+                } label: {
+                    Image(systemName: "gearshape")
+                }
+            }
+        }
     }
 
     private func formatDuration(_ ms: Int) -> String {

@@ -37,4 +37,8 @@ Follows [Google Mobile Ads iOS quick start](https://developers.google.com/admob/
 - DEBUG builds use **Google test ad units** (`AdMobConfig.useTestAds = true`) so you don’t risk policy strikes.
 - App ID is set in `Afterna/Info.plist`: `ca-app-pub-9350266309525886~6797170145`. Set `AdMobConfig.useTestAds = false` for Release to serve your production units.
 
+### Auth (Apple + Google)
+
+Login screen supports **Sign in with Apple** and **Continue with Google** (Supabase). Configure keys in `Afterna/Info.plist` — see [`supabase/README.md`](../supabase/README.md). Until Supabase is configured, use **Continue as Demo**.
+
 Microphone usage string is set via Info.plist keys. Default upload path uses mocks (`useMockUpload: true`).

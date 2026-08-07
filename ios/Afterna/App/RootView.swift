@@ -5,6 +5,28 @@ struct RootView: View {
     @State private var selected: AppTab = .capture
 
     var body: some View {
+        Group {
+            switch container.auth.status {
+            case .loading:
+                ZStack {
+                    DesignTokens.paper.ignoresSafeArea()
+                    ProgressView("Afterna")
+                }
+            case .signedOut:
+                AuthView()
+            case .signedIn:
+                mainTabs
+            }
+        }
+        .task {
+            await container.auth.bootstrap()
+            if container.auth.status == .signedIn {
+                await container.flags.refresh(using: container.api)
+            }
+        }
+    }
+
+    private var mainTabs: some View {
         TabView(selection: $selected) {
             NavigationStack {
                 MemoriesView()
@@ -25,9 +47,6 @@ struct RootView: View {
             .tag(AppTab.search)
         }
         .tint(DesignTokens.accent)
-        .task {
-            await container.flags.refresh(using: container.api)
-        }
     }
 }
 

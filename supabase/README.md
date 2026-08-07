@@ -11,18 +11,33 @@ supabase start
 supabase db reset
 ```
 
-## Sign in with Apple (stub)
+## Auth providers
 
-1. Create an App ID + Services ID in Apple Developer for `app.afterna.ios`.
-2. In Supabase Dashboard → Authentication → Providers → Apple, paste Service ID, Team ID, Key ID, and `.p8` secret.
-3. Redirect URL: `https://YOUR_PROJECT.supabase.co/auth/v1/callback`.
+### Sign in with Apple
 
-Until Apple credentials exist, the Node API accepts `Authorization: Bearer dev-user` in fixture mode.
+1. Apple Developer → Identifiers → App ID `app.afterna.ios` → enable **Sign In with Apple**.
+2. Xcode capability is already in `Afterna.entitlements`.
+3. Supabase Dashboard → Authentication → Providers → **Apple**:
+   - For native iOS, add Bundle ID `app.afterna.ios` under Client IDs (see [Supabase Apple docs](https://supabase.com/docs/guides/auth/social-login/auth-apple?platform=swift)).
+4. Put project URL + anon key into `ios/Afterna/Info.plist` (`SUPABASE_URL`, `SUPABASE_ANON_KEY`).
+
+### Google (Gmail)
+
+1. [Google Cloud Console](https://console.cloud.google.com/) → create OAuth consent screen.
+2. Create **iOS** OAuth client ID (bundle `app.afterna.ios`) and a **Web** client ID.
+3. Supabase → Authentication → Providers → **Google**:
+   - Paste Web + iOS client IDs (comma-separated) under Client IDs.
+   - Enable **Skip nonce check** for native Google Sign-In.
+4. In `ios/Afterna/Info.plist`:
+   - `GIDClientID` = iOS client ID (`….apps.googleusercontent.com`)
+   - `CFBundleURLSchemes` = reversed client ID (`com.googleusercontent.apps.…`)
+
+Until keys exist, the app shows **Continue as Demo** (`Authorization: Bearer dev-user` for the local API).
 
 ## Storage
 
-Bucket `audio-inbox` is private, path convention `{user_id}/{recording_id}.m4a`, intended TTL 24–72h (configure lifecycle in dashboard or cron purge job).
+Bucket `audio-inbox` is private, path convention `{user_id}/{recording_id}.m4a`, intended TTL 24–72h.
 
-## Note on Edge Functions
+## Edge Functions
 
-Upload complete + transcription workers live in `backend/` (Node + AssemblyAI SDK) so long ASR jobs are not bound by Edge CPU limits. Optional thin Edge proxies can be added later under `supabase/functions/`.
+Primary API: `backend/` (Hono on Node). Keep AssemblyAI / OpenAI keys in the Node worker environment, not in the iOS app.

@@ -208,5 +208,24 @@
 			<string>3qcr597p9d.skadnetwork</string>
 		</dict>
 	</array>
+	<!-- Auth: replace placeholders before enabling live Apple/Google login -->
+	<key>SUPABASE_URL</key>
+	<string>YOUR_SUPABASE_URL</string>
+	<key>SUPABASE_ANON_KEY</key>
+	<string>YOUR_SUPABASE_ANON_KEY</string>
+	<key>GIDClientID</key>
+	<string>YOUR_IOS_CLIENT_ID.apps.googleusercontent.com</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<!-- Reversed Google iOS client ID: com.googleusercontent.apps.123456789-abcdef -->
+				<string>com.googleusercontent.apps.YOUR_IOS_CLIENT_ID</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
