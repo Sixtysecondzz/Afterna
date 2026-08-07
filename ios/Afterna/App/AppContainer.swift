@@ -1,7 +1,6 @@
 import Foundation
 import Observation
 import SwiftData
-import ConversationCore
 
 @Observable
 @MainActor

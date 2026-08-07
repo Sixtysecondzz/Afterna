@@ -1,6 +1,5 @@
 import SwiftUI
 import SwiftData
-import ConversationCore
 
 @main
 struct AfternaApp: App {

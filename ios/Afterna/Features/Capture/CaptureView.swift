@@ -1,6 +1,5 @@
 import SwiftUI
 import SwiftData
-import ConversationCore
 
 struct CaptureView: View {
     @Environment(AppContainer.self) private var container
