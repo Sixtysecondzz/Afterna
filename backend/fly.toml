@@ -1,41 +1,40 @@
-# Deploy from the backend folder only:
-#   cd backend
-#   fly launch --copy-config --no-deploy   # first time if needed
-#   fly secrets set ...
-#   fly deploy
+# fly.toml app configuration file generated for afterna on 2026-08-07T23:42:25Z
 #
-# App name can be changed; update APP_BASE_URL to match.
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
 
-app = "afterna"
-primary_region = "syd"
+app = 'afterna'
+primary_region = 'syd'
 
 [build]
 
 [env]
-  PORT = "8080"
-  FIXTURE_MODE = "false"
-  NODE_ENV = "production"
+  FIXTURE_MODE = 'false'
+  NODE_ENV = 'production'
+  PORT = '8080'
 
 [processes]
-  app = "npx tsx src/index.ts"
-  worker = "npx tsx src/worker.ts"
+  app = 'npx tsx src/index.ts'
+  worker = 'npx tsx src/worker.ts'
 
 [http_service]
   internal_port = 8080
   force_https = true
-  auto_stop_machines = "stop"
+  auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 1
-  processes = ["app"]
+  processes = ['app']
 
 [[vm]]
-  memory = "512mb"
-  cpu_kind = "shared"
+  memory = '512mb'
+  cpu_kind = 'shared'
   cpus = 1
-  processes = ["app"]
+  memory_mb = 512
+  processes = ['app']
 
 [[vm]]
-  memory = "512mb"
-  cpu_kind = "shared"
+  memory = '512mb'
+  cpu_kind = 'shared'
   cpus = 1
-  processes = ["worker"]
+  memory_mb = 512
+  processes = ['worker']
