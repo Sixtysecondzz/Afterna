@@ -37,6 +37,8 @@ targets:
         INFOPLIST_FILE: Afterna/Info.plist
         CODE_SIGN_ENTITLEMENTS: Afterna/Afterna.entitlements
         INFOPLIST_KEY_CFBundleDisplayName: Afterna
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        INFOPLIST_KEY_CFBundleIconName: AppIcon
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
