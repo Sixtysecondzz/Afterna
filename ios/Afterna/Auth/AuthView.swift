@@ -7,12 +7,7 @@ struct AuthView: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(
-                colors: [DesignTokens.paper, DesignTokens.mist],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            AppBackground()
 
             VStack(spacing: 28) {
                 Spacer()
@@ -62,6 +57,7 @@ struct AuthView: View {
                     }
                     .buttonStyle(.plain)
                     .disabled(busy)
+                    .accessibilityLabel("Continue with Google")
 
                     Button("Continue as Guest") {
                         Task { await run { await container.auth.continueAsGuest() } }

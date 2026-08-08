@@ -242,6 +242,124 @@ public struct ArchiveSegmentPayload: Codable, Sendable {
     }
 }
 
+/// `GET /v1/conversations/:id/transcript` — segments, summary (with key points), and action items.
+public struct ConversationTranscriptResponse: Codable, Sendable {
+    public var conversationId: String
+    public var status: String?
+    public var segments: [Segment]
+    public var summary: Summary?
+    public var actionItems: [ActionItem]
+
+    enum CodingKeys: String, CodingKey {
+        case conversationId = "conversation_id"
+        case status, segments, summary
+        case actionItems = "action_items"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        conversationId = try c.decode(String.self, forKey: .conversationId)
+        status = try? c.decodeIfPresent(String.self, forKey: .status)
+        segments = (try? c.decodeIfPresent([Segment].self, forKey: .segments)) ?? []
+        summary = try? c.decodeIfPresent(Summary.self, forKey: .summary)
+        actionItems = (try? c.decodeIfPresent([ActionItem].self, forKey: .actionItems)) ?? []
+    }
+
+    public struct Segment: Codable, Sendable {
+        public var id: String?
+        public var text: String
+        public var tStartMs: Int
+        public var tEndMs: Int
+        /// Set in memory/fixture mode.
+        public var speakerLabel: String?
+        /// Set in Supabase mode via the speakers join.
+        public var speakers: SpeakerRef?
+
+        public struct SpeakerRef: Codable, Sendable {
+            public var label: String?
+        }
+
+        enum CodingKeys: String, CodingKey {
+            case id, text, speakers
+            case tStartMs = "t_start_ms"
+            case tEndMs = "t_end_ms"
+            case speakerLabel = "speaker_label"
+        }
+
+        public init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            id = try? c.decodeIfPresent(String.self, forKey: .id)
+            text = (try? c.decodeIfPresent(String.self, forKey: .text)) ?? ""
+            tStartMs = (try? c.decodeIfPresent(Int.self, forKey: .tStartMs)) ?? 0
+            tEndMs = (try? c.decodeIfPresent(Int.self, forKey: .tEndMs)) ?? 0
+            speakerLabel = try? c.decodeIfPresent(String.self, forKey: .speakerLabel)
+            speakers = try? c.decodeIfPresent(SpeakerRef.self, forKey: .speakers)
+        }
+
+        public var resolvedSpeaker: String {
+            speakerLabel ?? speakers?.label ?? "A"
+        }
+    }
+
+    public struct Summary: Codable, Sendable {
+        public var summary: String?
+        public var keyPoints: [String]
+        public var decisions: [String]
+
+        enum CodingKeys: String, CodingKey {
+            case summary
+            case keyPoints = "key_points"
+            case decisions
+        }
+
+        public init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            summary = try? c.decodeIfPresent(String.self, forKey: .summary)
+            keyPoints = ((try? c.decodeIfPresent([TextOrObject].self, forKey: .keyPoints)) ?? nil)?
+                .compactMap(\.text) ?? []
+            decisions = ((try? c.decodeIfPresent([TextOrObject].self, forKey: .decisions)) ?? nil)?
+                .compactMap(\.text) ?? []
+        }
+    }
+
+    /// The extract model returns key points as strings but decisions as `{ text, decided_by, … }` objects.
+    /// This wrapper accepts either shape.
+    public struct TextOrObject: Codable, Sendable {
+        public var text: String?
+
+        public init(from decoder: Decoder) throws {
+            if let single = try? decoder.singleValueContainer(), let str = try? single.decode(String.self) {
+                text = str
+                return
+            }
+            let c = try? decoder.container(keyedBy: CodingKeys.self)
+            text = try? c?.decodeIfPresent(String.self, forKey: .text)
+        }
+
+        enum CodingKeys: String, CodingKey { case text }
+    }
+
+    public struct ActionItem: Codable, Sendable {
+        public var id: String?
+        public var text: String
+        public var status: String?
+        public var dueDate: String?
+
+        enum CodingKeys: String, CodingKey {
+            case id, text, status
+            case dueDate = "due_date"
+        }
+
+        public init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            id = try? c.decodeIfPresent(String.self, forKey: .id)
+            text = (try? c.decodeIfPresent(String.self, forKey: .text)) ?? ""
+            status = try? c.decodeIfPresent(String.self, forKey: .status)
+            dueDate = try? c.decodeIfPresent(String.self, forKey: .dueDate)
+        }
+    }
+}
+
 public struct ArchiveLiveResponse: Codable, Sendable {
     public var recordingId: UUID
     public var conversationId: UUID

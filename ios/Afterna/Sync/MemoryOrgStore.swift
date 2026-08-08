@@ -73,6 +73,72 @@ final class MemoryOrgStore {
         }
     }
 
+    // MARK: Server hydration
+
+    /// Pulls segments, summary/key points, and extract-generated action items from the backend
+    /// (`GET /v1/conversations/:id/transcript`) into SwiftData. Works for guests too, since it
+    /// goes through the Afterna API rather than Supabase PostgREST.
+    func hydrateFromServer(_ conversation: ConversationEntity, api: APIClient, modelContext: ModelContext) async {
+        guard let serverId = conversation.serverConversationId else { return }
+        do {
+            let remote = try await api.conversationTranscript(id: serverId)
+
+            switch remote.status {
+            case "ready", "succeeded": conversation.statusRaw = "succeeded"
+            case "failed": conversation.statusRaw = "failed"
+            case .some(let other) where !other.isEmpty: conversation.statusRaw = other
+            default: break
+            }
+
+            // Replace local segments when the server has at least as many (server is canonical).
+            let remoteSegments = remote.segments.filter { !$0.text.isEmpty }
+            if !remoteSegments.isEmpty, remoteSegments.count >= conversation.segments.count {
+                for old in conversation.segments {
+                    modelContext.delete(old)
+                }
+                for seg in remoteSegments {
+                    let row = TranscriptSegmentEntity(
+                        id: seg.id.flatMap(UUID.init(uuidString:)) ?? UUID(),
+                        speakerLabel: seg.resolvedSpeaker,
+                        text: seg.text,
+                        startMs: seg.tStartMs,
+                        endMs: max(seg.tEndMs, seg.tStartMs)
+                    )
+                    row.conversation = conversation
+                    modelContext.insert(row)
+                }
+            }
+
+            if let summary = remote.summary {
+                if let text = summary.summary, !text.isEmpty {
+                    conversation.summaryText = text
+                }
+                if !summary.keyPoints.isEmpty { conversation.keyPoints = summary.keyPoints }
+                if !summary.decisions.isEmpty { conversation.decisions = summary.decisions }
+            }
+
+            // Merge extract-generated action items (keyed by server id to avoid duplicates).
+            let existingIds = Set(conversation.actionItems.compactMap(\.serverId))
+            for item in remote.actionItems where !item.text.isEmpty {
+                guard let idString = item.id, let itemId = UUID(uuidString: idString) else { continue }
+                guard !existingIds.contains(itemId) else { continue }
+                let entity = ActionItemEntity(
+                    id: itemId,
+                    text: item.text,
+                    status: ActionItemStatus(rawValue: item.status ?? "open") ?? .open,
+                    serverId: itemId,
+                    conversation: conversation
+                )
+                modelContext.insert(entity)
+            }
+
+            try? modelContext.save()
+        } catch {
+            // Non-fatal: the conversation stays usable with whatever is cached locally.
+            lastError = error.localizedDescription
+        }
+    }
+
     // MARK: Folders
 
     func createFolder(name: String, modelContext: ModelContext) async {

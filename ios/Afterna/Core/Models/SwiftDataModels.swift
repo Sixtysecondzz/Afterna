@@ -14,6 +14,9 @@ final class ConversationEntity {
     var jobId: UUID?
     var isPinned: Bool = false
     var folderId: UUID?
+    var summaryText: String?
+    var keyPoints: [String] = []
+    var decisions: [String] = []
     @Relationship(deleteRule: .cascade, inverse: \TranscriptSegmentEntity.conversation)
     var segments: [TranscriptSegmentEntity]
     @Relationship(deleteRule: .cascade, inverse: \QuoteEntity.conversation)

@@ -23,12 +23,7 @@ struct CaptureView: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(
-                colors: [DesignTokens.paper, DesignTokens.mist],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            AppBackground()
 
             VStack(spacing: 20) {
                 Text("Afterna")
@@ -117,6 +112,19 @@ struct CaptureView: View {
     private var captionsPanel: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 10) {
+                if finalTurns.isEmpty && partialText.isEmpty {
+                    VStack(spacing: 8) {
+                        Image(systemName: "waveform.and.mic")
+                            .font(.title2)
+                            .foregroundStyle(DesignTokens.textSecondary)
+                        Text(isRecording ? "Listening — captions appear here as you speak" : "Live captions appear here when you record")
+                            .font(.footnote)
+                            .foregroundStyle(DesignTokens.textSecondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 24)
+                }
                 ForEach(finalTurns) { turn in
                     VStack(alignment: .leading, spacing: 2) {
                         Text(turn.speakerLabel)
@@ -198,6 +206,7 @@ struct CaptureView: View {
             _ = try container.audio.start(sessionId: sessionId)
             isRecording = true
             statusText = "Listening…"
+            Haptics.impact()
         } catch {
             statusText = "Could not start: \(error.localizedDescription)"
             await streamClient.stop()
@@ -214,6 +223,7 @@ struct CaptureView: View {
             isRecording = false
             lastDurationMs = result.durationMs
             container.credits.consume(durationMs: result.durationMs)
+            Haptics.impact(.light)
 
             // Promote leftover partial into finals for archive
             if !partialText.isEmpty {
@@ -290,7 +300,8 @@ struct CaptureView: View {
                 try? modelContext.save()
                 statusText = "Archived (mock) — open Memories for details"
                 canArchive = false
-                InterstitialAdManager.shared.showAfterCaptureSaved()
+                Haptics.success()
+                showInterstitialAfterDelay()
                 return
             }
 
@@ -310,12 +321,14 @@ struct CaptureView: View {
             }
             try? modelContext.save()
 
-            if let extractId = response.extractJobId {
-                await pollExtract(extractId)
-            }
             statusText = "Archived — key points are generating"
             canArchive = false
-            InterstitialAdManager.shared.showAfterCaptureSaved()
+            Haptics.success()
+            showInterstitialAfterDelay()
+
+            if let extractId = response.extractJobId {
+                await pollExtract(extractId, entity: entity)
+            }
         } catch {
             entity.statusRaw = "failed"
             try? modelContext.save()
@@ -397,17 +410,26 @@ struct CaptureView: View {
         return min(approx, 3_600_000)
     }
 
+    /// Shows the post-archive interstitial only after the success status has been visible ~1.5 s.
+    private func showInterstitialAfterDelay() {
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 1_500_000_000)
+            InterstitialAdManager.shared.showAfterCaptureSaved()
+        }
+    }
+
     @MainActor
-    private func pollExtract(_ jobId: UUID) async {
+    private func pollExtract(_ jobId: UUID, entity: ConversationEntity) async {
         for _ in 0..<40 {
             do {
                 let status = try await container.api.jobStatus(id: jobId)
                 if status.status == "succeeded" {
-                    statusText = "Archived — key points ready"
+                    await container.memoryOrg.hydrateFromServer(entity, api: container.api, modelContext: modelContext)
+                    statusText = "Archived — key points ready in Memories"
                     return
                 }
                 if status.status == "failed" || status.status == "dead" {
-                    statusText = status.error ?? "Key points failed"
+                    statusText = status.error ?? "Key points failed — you can retry from the memory"
                     return
                 }
             } catch {
@@ -428,7 +450,9 @@ struct CaptureView: View {
                 entity.statusRaw = item.state.rawValue
                 try? modelContext.save()
                 if status.status == "succeeded" {
-                    statusText = "Transcribed"
+                    await container.memoryOrg.hydrateFromServer(entity, api: container.api, modelContext: modelContext)
+                    statusText = "Transcribed — open it in Memories"
+                    Haptics.success()
                     return
                 }
                 if status.status == "failed" || status.status == "dead" {

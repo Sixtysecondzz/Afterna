@@ -13,7 +13,7 @@ struct CreditsSheet: View {
                     .font(DesignTokens.displayFont)
                     .foregroundStyle(DesignTokens.ink)
 
-                Text("1 credit = \(container.credits.minutesPerCredit) minutes of capture time.")
+                Text("1 credit = \(container.credits.minutesPerCredit) minutes of capture time. New accounts start with \(AdMobConfig.welcomeCredits) free credits.")
                     .font(DesignTokens.bodyFont)
                     .foregroundStyle(.secondary)
 
@@ -39,6 +39,15 @@ struct CreditsSheet: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(busy || container.credits.dailyRewardsRemaining == 0)
+
+                if container.credits.dailyRewardsRemaining == 0 {
+                    Label(
+                        "You've reached today's reward limit — more ads unlock tomorrow.",
+                        systemImage: "clock"
+                    )
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                }
 
                 if let message, !message.isEmpty {
                     Text(message)

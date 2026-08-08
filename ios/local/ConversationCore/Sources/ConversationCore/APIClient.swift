@@ -78,6 +78,11 @@ public actor APIClient {
         try await authorizedGet(path: "v1/jobs/\(id.uuidString)")
     }
 
+    public func conversationTranscript(id: UUID) async throws -> ConversationTranscriptResponse {
+        // Lowercase so memory/fixture-mode Map lookups (string keys) match server-generated ids.
+        try await authorizedGet(path: "v1/conversations/\(id.uuidString.lowercased())/transcript")
+    }
+
     public func ask(question: String, conversationId: UUID?, scope: String = "conversation") async throws -> AskResponse {
         struct Body: Encodable {
             let question: String

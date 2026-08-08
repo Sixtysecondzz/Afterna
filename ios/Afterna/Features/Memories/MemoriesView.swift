@@ -10,6 +10,9 @@ struct MemoriesView: View {
     @State private var selectedFolderId: UUID?
     @State private var showFolders = false
     @State private var assignTarget: ConversationEntity?
+    @State private var deleteTarget: ConversationEntity?
+    @State private var renameTarget: ConversationEntity?
+    @State private var renameText = ""
 
     private var filtered: [ConversationEntity] {
         let base: [ConversationEntity]
@@ -78,7 +81,7 @@ struct MemoriesView: View {
                                     }
                                     .swipeActions(edge: .trailing) {
                                         Button(role: .destructive) {
-                                            Task { await container.memoryOrg.deleteConversation(item, modelContext: modelContext) }
+                                            deleteTarget = item
                                         } label: {
                                             Label("Delete", systemImage: "trash")
                                         }
@@ -94,9 +97,15 @@ struct MemoriesView: View {
                                         } label: {
                                             Label(item.isPinned ? "Unpin" : "Pin", systemImage: item.isPinned ? "pin.slash.fill" : "pin.fill")
                                         }
+                                        Button {
+                                            renameTarget = item
+                                            renameText = item.title
+                                        } label: {
+                                            Label("Rename", systemImage: "pencil")
+                                        }
                                         Button("Move to folder…") { assignTarget = item }
                                         Button("Delete", role: .destructive) {
-                                            Task { await container.memoryOrg.deleteConversation(item, modelContext: modelContext) }
+                                            deleteTarget = item
                                         }
                                     }
                                 case .nativeAd(let slot):
@@ -127,6 +136,34 @@ struct MemoriesView: View {
         }
         .sheet(item: $assignTarget) { conv in
             AssignFolderSheet(conversation: conv, folders: folders)
+        }
+        .confirmationDialog(
+            "Delete “\(deleteTarget?.title ?? "this memory")”? This removes the transcript, summary, and quotes everywhere.",
+            isPresented: Binding(get: { deleteTarget != nil }, set: { if !$0 { deleteTarget = nil } }),
+            titleVisibility: .visible
+        ) {
+            Button("Delete memory", role: .destructive) {
+                if let item = deleteTarget {
+                    Task { await container.memoryOrg.deleteConversation(item, modelContext: modelContext) }
+                }
+                deleteTarget = nil
+            }
+            Button("Cancel", role: .cancel) { deleteTarget = nil }
+        }
+        .alert("Rename memory", isPresented: Binding(
+            get: { renameTarget != nil },
+            set: { if !$0 { renameTarget = nil } }
+        )) {
+            TextField("Title", text: $renameText)
+            Button("Save") {
+                let trimmed = renameText.trimmingCharacters(in: .whitespacesAndNewlines)
+                if let item = renameTarget, !trimmed.isEmpty {
+                    item.title = trimmed
+                    try? modelContext.save()
+                }
+                renameTarget = nil
+            }
+            Button("Cancel", role: .cancel) { renameTarget = nil }
         }
         .task {
             SampleDataSeeder.seedIfNeeded(modelContext: modelContext)
@@ -182,9 +219,12 @@ struct MemoriesView: View {
                 Text(item.title)
                     .font(DesignTokens.titleFont)
                     .foregroundStyle(DesignTokens.ink)
-                Text("\(formatDuration(item.durationMs)) · \(item.statusRaw)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                HStack(spacing: DesignTokens.spaceS) {
+                    Text(formatDuration(item.durationMs))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    StatusChip(statusRaw: item.statusRaw)
+                }
                 if let folderId = item.folderId,
                    let name = folders.first(where: { $0.id == folderId || $0.serverId == folderId })?.name {
                     Text(name)
@@ -222,6 +262,7 @@ struct FoldersManageSheet: View {
     @State private var newName = ""
     @State private var renameTarget: FolderEntity?
     @State private var renameText = ""
+    @State private var deleteTarget: FolderEntity?
 
     var body: some View {
         NavigationStack {
@@ -240,7 +281,7 @@ struct FoldersManageSheet: View {
                                     renameText = folder.name
                                 }
                                 Button("Delete", role: .destructive) {
-                                    Task { await container.memoryOrg.deleteFolder(folder, modelContext: modelContext) }
+                                    deleteTarget = folder
                                 }
                             }
                     }
@@ -276,6 +317,19 @@ struct FoldersManageSheet: View {
                     renameTarget = nil
                 }
                 Button("Cancel", role: .cancel) { renameTarget = nil }
+            }
+            .confirmationDialog(
+                "Delete folder “\(deleteTarget?.name ?? "")”? Memories inside it are kept.",
+                isPresented: Binding(get: { deleteTarget != nil }, set: { if !$0 { deleteTarget = nil } }),
+                titleVisibility: .visible
+            ) {
+                Button("Delete folder", role: .destructive) {
+                    if let folder = deleteTarget {
+                        Task { await container.memoryOrg.deleteFolder(folder, modelContext: modelContext) }
+                    }
+                    deleteTarget = nil
+                }
+                Button("Cancel", role: .cancel) { deleteTarget = nil }
             }
         }
     }
