@@ -528,6 +528,7 @@
 		7A58A8BB6F48AFCB7B631292 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Afterna/Afterna.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -535,6 +536,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Afterna/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Afterna;
+				INFOPLIST_KEY_CFBundleIconName = AppIcon;
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Afterna uses your calendar to suggest titles for meetings you record.";
 				INFOPLIST_KEY_NSCalendarsUsageDescription = "Afterna uses your calendar to suggest titles for meetings you record.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Afterna records conversations you choose to capture.";
@@ -569,6 +571,7 @@
 		CB074DA5CC01C576AEA29898 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Afterna/Afterna.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -576,6 +579,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Afterna/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Afterna;
+				INFOPLIST_KEY_CFBundleIconName = AppIcon;
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Afterna uses your calendar to suggest titles for meetings you record.";
 				INFOPLIST_KEY_NSCalendarsUsageDescription = "Afterna uses your calendar to suggest titles for meetings you record.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Afterna records conversations you choose to capture.";

@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CFBundleIconName</key>
+	<string>AppIcon</string>
 	<key>GADApplicationIdentifier</key>
 	<!-- AdMob App ID for Afterna -->
 	<string>ca-app-pub-9350266309525886~6797170145</string>
