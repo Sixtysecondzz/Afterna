@@ -3,6 +3,8 @@ import AVFoundation
 
 protocol AudioCapturing: AnyObject {
     var isRecording: Bool { get }
+    /// 16-bit little-endian mono PCM @ 16 kHz when streaming capture is active.
+    var onPCMChunk: ((Data) -> Void)? { get set }
     func requestPermission() async -> Bool
     func start(sessionId: UUID) throws -> URL
     func stop() throws -> (url: URL, durationMs: Int)
@@ -15,6 +17,7 @@ final class AVAudioCaptureEngine: NSObject, AudioCapturing, AVAudioRecorderDeleg
     private var startedAt: Date?
     private var usingFallback = false
     private(set) var isRecording = false
+    var onPCMChunk: ((Data) -> Void)?
 
     func requestPermission() async -> Bool {
         #if targetEnvironment(simulator)

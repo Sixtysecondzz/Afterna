@@ -98,6 +98,49 @@ public actor APIClient {
         try Self.throwIfNeeded(response)
     }
 
+    public func streamingToken(
+        expiresInSeconds: Int = 60,
+        maxSessionDurationSeconds: Int = 3600
+    ) async throws -> StreamingTokenResponse {
+        struct Body: Encodable {
+            let expires_in_seconds: Int
+            let max_session_duration_seconds: Int
+        }
+        return try await authorizedPost(
+            path: "v1/streaming/token",
+            body: Body(
+                expires_in_seconds: expiresInSeconds,
+                max_session_duration_seconds: maxSessionDurationSeconds
+            )
+        )
+    }
+
+    public func archiveLiveTranscript(
+        clientSessionId: UUID,
+        durationMs: Int,
+        title: String?,
+        language: String = "en",
+        segments: [ArchiveSegmentPayload]
+    ) async throws -> ArchiveLiveResponse {
+        struct Body: Encodable {
+            let client_session_id: String
+            let duration_ms: Int
+            let title: String?
+            let language: String
+            let segments: [ArchiveSegmentPayload]
+        }
+        return try await authorizedPost(
+            path: "v1/conversations/archive",
+            body: Body(
+                client_session_id: clientSessionId.uuidString,
+                duration_ms: durationMs,
+                title: title,
+                language: language,
+                segments: segments
+            )
+        )
+    }
+
     private func url(_ path: String) -> URL {
         let trimmed = baseURL.absoluteString.hasSuffix("/")
             ? String(baseURL.absoluteString.dropLast())

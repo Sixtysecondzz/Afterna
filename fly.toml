@@ -1,5 +1,8 @@
 # Fly app for Afterna API (monorepo root).
 # Deploy from Fly dashboard / GitHub — uses this file + root Dockerfile.
+#
+# IMPORTANT: Destroy any old "worker" Machines in the Fly UI.
+# They do not listen on 8080 and make Fly Doctor report a false 502/listen error.
 
 app = "afterna"
 primary_region = "syd"
@@ -9,8 +12,12 @@ primary_region = "syd"
 
 [env]
   PORT = "8080"
+  HOST = "0.0.0.0"
   FIXTURE_MODE = "false"
   NODE_ENV = "production"
+
+[processes]
+  app = "node dist/index.js"
 
 [http_service]
   internal_port = 8080
@@ -18,8 +25,17 @@ primary_region = "syd"
   auto_stop_machines = "stop"
   auto_start_machines = true
   min_machines_running = 1
+  processes = ["app"]
+
+  [[http_service.checks]]
+    grace_period = "15s"
+    interval = "20s"
+    method = "GET"
+    timeout = "5s"
+    path = "/health"
 
 [[vm]]
   memory = "512mb"
   cpu_kind = "shared"
   cpus = 1
+  processes = ["app"]

@@ -77,6 +77,11 @@ struct MemoriesView: View {
                                         .tint(DesignTokens.accent)
                                     }
                                     .swipeActions(edge: .trailing) {
+                                        Button(role: .destructive) {
+                                            Task { await container.memoryOrg.deleteConversation(item, modelContext: modelContext) }
+                                        } label: {
+                                            Label("Delete", systemImage: "trash")
+                                        }
                                         Button {
                                             assignTarget = item
                                         } label: {
@@ -90,6 +95,9 @@ struct MemoriesView: View {
                                             Label(item.isPinned ? "Unpin" : "Pin", systemImage: item.isPinned ? "pin.slash.fill" : "pin.fill")
                                         }
                                         Button("Move to folder…") { assignTarget = item }
+                                        Button("Delete", role: .destructive) {
+                                            Task { await container.memoryOrg.deleteConversation(item, modelContext: modelContext) }
+                                        }
                                     }
                                 case .nativeAd(let slot):
                                     NativeFeedAdView()

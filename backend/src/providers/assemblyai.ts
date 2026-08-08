@@ -23,6 +23,7 @@ export async function submitAssemblyAiTranscription(input: {
     audio_url: input.audioUrl,
     speech_models: ["universal-3-5-pro", "universal-2"],
     speaker_labels: true,
+    language_detection: input.languageCode ? undefined : true,
     language_code: input.languageCode,
     webhook_url: input.webhookUrl,
     webhook_auth_header_name: input.webhookUrl ? config.webhookAuthHeaderName : undefined,

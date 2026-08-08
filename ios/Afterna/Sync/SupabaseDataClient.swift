@@ -151,6 +151,16 @@ actor SupabaseDataClient {
         try await rawPatch("conversations", query: "id=eq.\(id.uuidString)", data: data, accessToken: accessToken)
     }
 
+    /// Deletes a conversation the caller owns (RLS: auth.uid() = user_id). Cascades related rows.
+    func deleteConversation(id: UUID, accessToken: String) async throws {
+        try await delete("conversations", query: "id=eq.\(id.uuidString)", accessToken: accessToken)
+    }
+
+    /// Deletes a recording the caller owns (RLS). Safe no-op if already gone.
+    func deleteRecording(id: UUID, accessToken: String) async throws {
+        try await delete("recordings", query: "id=eq.\(id.uuidString)", accessToken: accessToken)
+    }
+
     func fetchConversationFlags(ids: [UUID], accessToken: String) async throws -> [UUID: (pinned: Bool, folderId: UUID?)] {
         guard !ids.isEmpty else { return [:] }
         let list = ids.map(\.uuidString).joined(separator: ",")

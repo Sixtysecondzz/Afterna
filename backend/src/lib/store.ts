@@ -98,9 +98,15 @@ export async function createSignedUploadUrl(storagePath: string): Promise<{
   mode: "supabase" | "local";
 }> {
   if (!hasSupabase()) {
+    const base = config.appBaseUrl.replace(/\/$/, "");
+    if (base.includes("localhost") || base.includes("127.0.0.1")) {
+      console.warn(
+        "[storage] APP_BASE_URL is localhost and Supabase is not configured — mobile clients cannot upload. Set SUPABASE_* and APP_BASE_URL=https://afterna.fly.dev",
+      );
+    }
     const encoded = storagePath.split("/").map(encodeURIComponent).join("/");
     return {
-      uploadUrl: `${config.appBaseUrl}/v1/uploads/local/${encoded}`,
+      uploadUrl: `${base}/v1/uploads/local/${encoded}`,
       mode: "local",
     };
   }

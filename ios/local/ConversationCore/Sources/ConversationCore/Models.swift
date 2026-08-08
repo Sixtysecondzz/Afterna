@@ -155,3 +155,105 @@ public struct AskResponse: Codable, Sendable {
     public var citations: [Citation]
     public var model: String?
 }
+
+public struct StreamingTokenResponse: Codable, Sendable {
+    public var token: String
+    public var expiresInSeconds: Int
+    public var maxSessionDurationSeconds: Int
+    public var wsUrl: String
+    public var params: [String: StreamingParamValue]
+    public var fixture: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case token
+        case expiresInSeconds = "expires_in_seconds"
+        case maxSessionDurationSeconds = "max_session_duration_seconds"
+        case wsUrl = "ws_url"
+        case params
+        case fixture
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        token = try c.decode(String.self, forKey: .token)
+        expiresInSeconds = try c.decodeIfPresent(Int.self, forKey: .expiresInSeconds) ?? 60
+        maxSessionDurationSeconds = try c.decodeIfPresent(Int.self, forKey: .maxSessionDurationSeconds) ?? 3600
+        wsUrl = try c.decodeIfPresent(String.self, forKey: .wsUrl) ?? "wss://streaming.assemblyai.com/v3/ws"
+        params = try c.decodeIfPresent([String: StreamingParamValue].self, forKey: .params) ?? [:]
+        fixture = try c.decodeIfPresent(Bool.self, forKey: .fixture) ?? false
+    }
+}
+
+public enum StreamingParamValue: Codable, Sendable, CustomStringConvertible {
+    case string(String)
+    case int(Int)
+    case bool(Bool)
+    case double(Double)
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.singleValueContainer()
+        if let v = try? c.decode(Bool.self) { self = .bool(v); return }
+        if let v = try? c.decode(Int.self) { self = .int(v); return }
+        if let v = try? c.decode(Double.self) { self = .double(v); return }
+        self = .string(try c.decode(String.self))
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.singleValueContainer()
+        switch self {
+        case .string(let v): try c.encode(v)
+        case .int(let v): try c.encode(v)
+        case .bool(let v): try c.encode(v)
+        case .double(let v): try c.encode(v)
+        }
+    }
+
+    public var description: String {
+        switch self {
+        case .string(let v): return v
+        case .int(let v): return String(v)
+        case .bool(let v): return v ? "true" : "false"
+        case .double(let v): return String(v)
+        }
+    }
+}
+
+public struct ArchiveSegmentPayload: Codable, Sendable {
+    public var speakerLabel: String
+    public var text: String
+    public var startMs: Int
+    public var endMs: Int
+    public var confidence: Double?
+
+    public init(speakerLabel: String, text: String, startMs: Int, endMs: Int, confidence: Double? = nil) {
+        self.speakerLabel = speakerLabel
+        self.text = text
+        self.startMs = startMs
+        self.endMs = endMs
+        self.confidence = confidence
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case speakerLabel = "speaker_label"
+        case text
+        case startMs = "start_ms"
+        case endMs = "end_ms"
+        case confidence
+    }
+}
+
+public struct ArchiveLiveResponse: Codable, Sendable {
+    public var recordingId: UUID
+    public var conversationId: UUID
+    public var extractJobId: UUID?
+    public var status: String
+    public var title: String?
+    public var message: String?
+
+    enum CodingKeys: String, CodingKey {
+        case recordingId = "recording_id"
+        case conversationId = "conversation_id"
+        case extractJobId = "extract_job_id"
+        case status, title, message
+    }
+}

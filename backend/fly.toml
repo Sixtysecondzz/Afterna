@@ -1,7 +1,8 @@
 # Deploy from the backend folder only:
 #   cd backend && fly deploy
 #
-# Dashboard / GitHub deploys use the root fly.toml + Dockerfile instead.
+# Destroy any leftover "worker" Machines in the Fly dashboard — they cause
+# Doctor "not listening on 8080" warnings because workers have no HTTP port.
 
 app = "afterna"
 primary_region = "syd"
@@ -10,8 +11,12 @@ primary_region = "syd"
 
 [env]
   PORT = "8080"
+  HOST = "0.0.0.0"
   FIXTURE_MODE = "false"
   NODE_ENV = "production"
+
+[processes]
+  app = "node dist/index.js"
 
 [http_service]
   internal_port = 8080
@@ -19,8 +24,17 @@ primary_region = "syd"
   auto_stop_machines = "stop"
   auto_start_machines = true
   min_machines_running = 1
+  processes = ["app"]
+
+  [[http_service.checks]]
+    grace_period = "15s"
+    interval = "20s"
+    method = "GET"
+    timeout = "5s"
+    path = "/health"
 
 [[vm]]
   memory = "512mb"
   cpu_kind = "shared"
   cpus = 1
+  processes = ["app"]

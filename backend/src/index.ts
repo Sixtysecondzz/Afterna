@@ -1,4 +1,5 @@
-import { serve } from "@hono/node-server";
+import { createServer } from "node:http";
+import { getRequestListener } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { config } from "./config.js";
@@ -7,6 +8,8 @@ import { uploadRoutes } from "./routes/uploads.js";
 import { jobRoutes } from "./routes/jobs.js";
 import { askRoutes } from "./routes/ask.js";
 import { webhookRoutes } from "./routes/webhooks.js";
+import { streamingRoutes } from "./routes/streaming.js";
+import { archiveRoutes } from "./routes/archive.js";
 import { processAvailableJobs } from "./jobs/processJobs.js";
 
 const app = new Hono();
@@ -31,6 +34,7 @@ app.get("/health", (c) =>
     ok: true,
     service: "afterna-backend",
     fixture_mode: config.fixtureMode,
+    listen: `0.0.0.0:${config.port}`,
   }),
 );
 
@@ -39,6 +43,8 @@ app.route("/", uploadRoutes);
 app.route("/", jobRoutes);
 app.route("/", askRoutes);
 app.route("/", webhookRoutes);
+app.route("/", streamingRoutes);
+app.route("/", archiveRoutes);
 
 /** Dev convenience: process queued jobs inline once. */
 app.post("/v1/worker/tick", async (c) => {
@@ -46,7 +52,7 @@ app.post("/v1/worker/tick", async (c) => {
   return c.json({ processed: n });
 });
 
-/** Embedded worker — keeps Fly to a single process group (dashboard deploys are flaky with app+worker). */
+/** Embedded worker — single Fly process group (no separate worker machines). */
 const WORKER_INTERVAL_MS = Number(process.env.WORKER_INTERVAL_MS ?? 2000);
 async function workerLoop() {
   try {
@@ -59,8 +65,13 @@ async function workerLoop() {
   }
 }
 
-serve({ fetch: app.fetch, port: config.port, hostname: "0.0.0.0" }, (info) => {
-  console.log(`Afterna API listening on http://0.0.0.0:${info.port} (fixture=${config.fixtureMode})`);
+/** Fly proxy requires bind on 0.0.0.0 (not localhost). Prefer process.env.PORT. */
+const port = Number(process.env.PORT || config.port || 8080);
+const host = "0.0.0.0";
+
+const server = createServer(getRequestListener(app.fetch));
+server.listen(port, host, () => {
+  console.log(`Afterna API listening on http://${host}:${port} (fixture=${config.fixtureMode})`);
   void workerLoop();
 });
 

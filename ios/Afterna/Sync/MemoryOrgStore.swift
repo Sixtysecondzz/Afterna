@@ -110,6 +110,44 @@ final class MemoryOrgStore {
         }
     }
 
+    /// Removes a memory from the local list and, when signed in, from Supabase (owner-only via RLS).
+    func deleteConversation(_ conversation: ConversationEntity, modelContext: ModelContext) async {
+        let serverConversationId = conversation.serverConversationId
+        let serverRecordingId = conversation.serverRecordingId
+        let localFileName = conversation.recordingFileName
+
+        modelContext.delete(conversation)
+        try? modelContext.save()
+
+        if let name = localFileName {
+            let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
+                .appendingPathComponent("Recordings", isDirectory: true)
+            if let dir, let enumerator = FileManager.default.enumerator(at: dir, includingPropertiesForKeys: nil) {
+                for case let fileURL as URL in enumerator where fileURL.lastPathComponent == name {
+                    try? FileManager.default.removeItem(at: fileURL)
+                }
+            }
+        }
+
+        do {
+            let creds = try await liveCredentials()
+            if let serverConversationId {
+                try await creds.client.deleteConversation(id: serverConversationId, accessToken: creds.token)
+            }
+            if let serverRecordingId {
+                try await creds.client.deleteRecording(id: serverRecordingId, accessToken: creds.token)
+            }
+        } catch let error as DataAPIError {
+            if case .notSignedIn = error {
+                requiresSignIn = true
+            } else {
+                lastError = error.localizedDescription
+            }
+        } catch {
+            lastError = error.localizedDescription
+        }
+    }
+
     func deleteFolder(_ folder: FolderEntity, modelContext: ModelContext) async {
         let id = folder.serverId ?? folder.id
         modelContext.delete(folder)

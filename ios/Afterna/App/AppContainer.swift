@@ -42,7 +42,7 @@ final class AppContainer {
         let mock = useMockUpload ?? APIConfig.useMockUpload
         self.usesMockUpload = mock
         self.uploadOutbox = mock ? MockUploading() : UploadOutbox(api: api)
-        self.audio = AVAudioCaptureEngine()
+        self.audio = StreamingMicEngine()
     }
 
     func bindCreditsToCurrentUser() {

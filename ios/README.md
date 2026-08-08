@@ -48,3 +48,9 @@ Follows [Google Mobile Ads iOS quick start](https://developers.google.com/admob/
 Login screen supports **Sign in with Apple** and **Continue with Google** (Supabase). Configure keys in `Afterna/Info.plist` — see [`supabase/README.md`](../supabase/README.md). Until Supabase is configured, use **Continue as Demo**.
 
 Microphone usage string is set via Info.plist keys. Live API defaults to `https://afterna.fly.dev` with `AFTERNA_USE_MOCK_UPLOAD=false`.
+
+### Hybrid capture (live captions + file import)
+
+- **Record:** `StreamingMicEngine` sends 16 kHz PCM to AssemblyAI Streaming (token from `POST /v1/streaming/token`). Captions appear live; **Archive** saves the transcript and queues OpenAI extract for key points.
+- **Import audio:** document picker → existing upload → async AssemblyAI → extract.
+- Fixture / mock: when the API returns `fixture: true` (or `AFTERNA_USE_MOCK_UPLOAD=true`), captions and archive run without a live AssemblyAI session.
