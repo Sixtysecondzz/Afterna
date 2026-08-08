@@ -1,6 +1,6 @@
 import { config } from "../config.js";
 import { id, yearMonth } from "./ids.js";
-import { getAdminClient, hasSupabase, memory } from "./supabase.js";
+import { ensureAppUser, getAdminClient, hasSupabase, memory } from "./supabase.js";
 import type { AiJobRow, CanonicalTranscript, JobType } from "../types.js";
 
 export async function createRecording(input: {
@@ -11,6 +11,8 @@ export async function createRecording(input: {
   checksumHex?: string;
   keepAudio?: boolean;
 }): Promise<{ recordingId: string; conversationId: string; storagePath: string }> {
+  await ensureAppUser(input.userId);
+
   const recordingId = id();
   const conversationId = id();
   const storagePath = `${input.userId}/${recordingId}.m4a`;

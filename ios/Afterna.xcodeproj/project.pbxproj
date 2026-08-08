@@ -12,7 +12,6 @@
 		0B137E6F0D30F281C540DFD5 /* APIConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3D1EBFD47E2147EC9A1B7F9 /* APIConfig.swift */; };
 		1310F8038FE88D13BA7B86A6 /* AppContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1D294D23E60B3F5823E6B72 /* AppContainer.swift */; };
 		1E72BA5447F6345FB174AAA8 /* NativeFeedAdView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AF5853218B8026D46250679 /* NativeFeedAdView.swift */; };
-		1E734710AB49BE0A228792BC /* StreamingMicEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F157B65C8B008E749867A8E /* StreamingMicEngine.swift */; };
 		21BD1657A9DF78507B1AABB4 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2B05EDA74C7F2612FA04AC7 /* APIClient.swift */; };
 		24A0369B93E781A5B39AD5FB /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C46B60FD06793246A347A7D0 /* SearchView.swift */; };
 		3242E9FBB6A608F4EFCB4B02 /* AfternaApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93C1D6E11BBB8AA8DB9F5947 /* AfternaApp.swift */; };
@@ -35,11 +34,12 @@
 		A0D722F5ED28F2E7DD0321ED /* CreditsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DAF613A5DD20916A8A298CA /* CreditsSheet.swift */; };
 		AAC73528143209E3CDBC286B /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DE789A8A7983A37532D0079 /* Models.swift */; };
 		B1359350F307DEA560847413 /* AdMobBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79D57E765AC34E2037303165 /* AdMobBootstrap.swift */; };
-		B6628E72A8B124A72EFCB370 /* AssemblyAIStreamingClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E17827B40D46794442F074B0 /* AssemblyAIStreamingClient.swift */; };
 		BE158D3C327879D0240B72EA /* AuthConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9FA8C532B0608351A44CD27 /* AuthConfig.swift */; };
 		C78ACD71ACF290DAABB53FD7 /* FeatureFlags.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D9532581D6FF12F1244FC11 /* FeatureFlags.swift */; };
 		D0DD61E456905F494D209BE6 /* AudioCapturing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AAF6DC652EDE0B98A250401 /* AudioCapturing.swift */; };
-		D39652DB166ED038AE064F24 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A6D2811A0867C42E04202AC0 /* Assets.xcassets */; };
+		E1A2B3C4D5E6F708192A3B4C /* StreamingMicEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A2B3C4D5E6F708192A3B4D /* StreamingMicEngine.swift */; };
+		E1A2B3C4D5E6F708192A3B4E /* AssemblyAIStreamingClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A2B3C4D5E6F708192A3B4F /* AssemblyAIStreamingClient.swift */; };
+		E1A2B3C4D5E6F708192A3B50 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E1A2B3C4D5E6F708192A3B51 /* Assets.xcassets */; };
 		D47052B87815B5B90B7B68B8 /* UIKitPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C19453633A33073819714126 /* UIKitPresenter.swift */; };
 		D55BECF366407D5FE1350F2F /* UploadOutbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5628965E4BE9E8168DE82446 /* UploadOutbox.swift */; };
 		D8F09746D4EEC2EC337E829F /* CaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFE64AA011881C279A62C0E9 /* CaptureView.swift */; };
@@ -58,7 +58,7 @@
 		2D9532581D6FF12F1244FC11 /* FeatureFlags.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureFlags.swift; sourceTree = "<group>"; };
 		3E21A03C73B9C3D6E6246AD3 /* NativeAdManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeAdManager.swift; sourceTree = "<group>"; };
 		49AA0F8B3FE1F3C9A3C272A2 /* SwiftDataModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDataModels.swift; sourceTree = "<group>"; };
-		4DBC18AAAF6226E68004891A /* Afterna.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Afterna.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		4DBC18AAAF6226E68004891A /* Afterna.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Afterna.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4DE789A8A7983A37532D0079 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		52D047014D34F14337D79A6F /* AppOpenAdManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppOpenAdManager.swift; sourceTree = "<group>"; };
 		5628965E4BE9E8168DE82446 /* UploadOutbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadOutbox.swift; sourceTree = "<group>"; };
@@ -67,13 +67,11 @@
 		6F4023F59DE86227E3C0FA26 /* AdMobConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdMobConfig.swift; sourceTree = "<group>"; };
 		79D57E765AC34E2037303165 /* AdMobBootstrap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdMobBootstrap.swift; sourceTree = "<group>"; };
 		7AF5853218B8026D46250679 /* NativeFeedAdView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeFeedAdView.swift; sourceTree = "<group>"; };
-		7F157B65C8B008E749867A8E /* StreamingMicEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamingMicEngine.swift; sourceTree = "<group>"; };
 		8EF11A6A291A75533252CDA0 /* BannerAdView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BannerAdView.swift; sourceTree = "<group>"; };
 		93C1D6E11BBB8AA8DB9F5947 /* AfternaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AfternaApp.swift; sourceTree = "<group>"; };
 		A3D1EBFD47E2147EC9A1B7F9 /* APIConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIConfig.swift; sourceTree = "<group>"; };
 		A5D576BBF9ECE0EDA94A8644 /* SupabaseAuthClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseAuthClient.swift; sourceTree = "<group>"; };
 		A6C633DA25BE269120CE0C91 /* ConversationDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationDetailView.swift; sourceTree = "<group>"; };
-		A6D2811A0867C42E04202AC0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A83315A557290599921EF9E9 /* SampleDataSeeder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleDataSeeder.swift; sourceTree = "<group>"; };
 		AF3E71ED868B5E6D08E29C23 /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
 		B3AFDC4121603E8612DF82D0 /* SupabaseDataClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseDataClient.swift; sourceTree = "<group>"; };
@@ -85,7 +83,6 @@
 		CAA23AEB801CBBEA17EC2BA4 /* InterstitialAdManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InterstitialAdManager.swift; sourceTree = "<group>"; };
 		D1D294D23E60B3F5823E6B72 /* AppContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppContainer.swift; sourceTree = "<group>"; };
 		DFE64AA011881C279A62C0E9 /* CaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureView.swift; sourceTree = "<group>"; };
-		E17827B40D46794442F074B0 /* AssemblyAIStreamingClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssemblyAIStreamingClient.swift; sourceTree = "<group>"; };
 		EA08853B0C13879F716AD617 /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
 		ECCCE1C232AAC3C68A2B24E9 /* MemoriesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoriesView.swift; sourceTree = "<group>"; };
 		F7257E6C6953C440AC51D90E /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
@@ -188,9 +185,7 @@
 		3F6607EB3EA59EFB441B442D /* Audio */ = {
 			isa = PBXGroup;
 			children = (
-				E17827B40D46794442F074B0 /* AssemblyAIStreamingClient.swift */,
 				2AAF6DC652EDE0B98A250401 /* AudioCapturing.swift */,
-				7F157B65C8B008E749867A8E /* StreamingMicEngine.swift */,
 			);
 			path = Audio;
 			sourceTree = "<group>";
@@ -235,7 +230,6 @@
 			isa = PBXGroup;
 			children = (
 				93C1D6E11BBB8AA8DB9F5947 /* AfternaApp.swift */,
-				A6D2811A0867C42E04202AC0 /* Assets.xcassets */,
 				0577C16E86E939CC18452E5B /* Ads */,
 				4489FE2F6F95FCA8A02046BE /* App */,
 				3F6607EB3EA59EFB441B442D /* Audio */,
@@ -326,7 +320,6 @@
 			buildConfigurationList = 73A0376EF89AB49272C019B3 /* Build configuration list for PBXNativeTarget "Afterna" */;
 			buildPhases = (
 				20FD604C90F96CFB6D8360D3 /* Sources */,
-				296A1D41AAD25B81FEE59C24 /* Resources */,
 				C301E23EDED77B906B91DBB4 /* Frameworks */,
 			);
 			buildRules = (
@@ -350,9 +343,6 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
-					131EB83A278CB9A3FF1FAE10 = {
-						DevelopmentTeam = V5GB46FZ48;
-					};
 				};
 			};
 			buildConfigurationList = D98CF0C2CFEE99A51AAFBEC2 /* Build configuration list for PBXProject "Afterna" */;
@@ -377,17 +367,6 @@
 		};
 /* End PBXProject section */
 
-/* Begin PBXResourcesBuildPhase section */
-		296A1D41AAD25B81FEE59C24 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				D39652DB166ED038AE064F24 /* Assets.xcassets in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXResourcesBuildPhase section */
-
 /* Begin PBXSourcesBuildPhase section */
 		20FD604C90F96CFB6D8360D3 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -400,7 +379,6 @@
 				3242E9FBB6A608F4EFCB4B02 /* AfternaApp.swift in Sources */,
 				1310F8038FE88D13BA7B86A6 /* AppContainer.swift in Sources */,
 				3F21FF001BC972FD9892EAC6 /* AppOpenAdManager.swift in Sources */,
-				B6628E72A8B124A72EFCB370 /* AssemblyAIStreamingClient.swift in Sources */,
 				D0DD61E456905F494D209BE6 /* AudioCapturing.swift in Sources */,
 				BE158D3C327879D0240B72EA /* AuthConfig.swift in Sources */,
 				6B7690DB21704713FE9FA234 /* AuthService.swift in Sources */,
@@ -424,7 +402,6 @@
 				FBD9634C1BAAC5AD0FD370FD /* SampleDataSeeder.swift in Sources */,
 				24A0369B93E781A5B39AD5FB /* SearchView.swift in Sources */,
 				E30EBDE26A0AC07E467ACB46 /* SettingsView.swift in Sources */,
-				1E734710AB49BE0A228792BC /* StreamingMicEngine.swift in Sources */,
 				98864257BCD2AA8211ED21FD /* SupabaseAuthClient.swift in Sources */,
 				DA73AE3843B8BEDB1143713D /* SupabaseDataClient.swift in Sources */,
 				5FEA58D1F45A4D9311599E13 /* SwiftDataModels.swift in Sources */,
@@ -451,21 +428,17 @@
 		7A58A8BB6F48AFCB7B631292 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Afterna/Afterna.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = V5GB46FZ48;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Afterna/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Afterna;
-				INFOPLIST_KEY_CFBundleIconName = AppIcon;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Afterna records conversations you choose to capture.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 0.0.1;
+				MARKETING_VERSION = 0.1.0;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
@@ -492,21 +465,17 @@
 		CB074DA5CC01C576AEA29898 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Afterna/Afterna.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = V5GB46FZ48;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Afterna/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Afterna;
-				INFOPLIST_KEY_CFBundleIconName = AppIcon;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Afterna records conversations you choose to capture.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 0.0.1;
+				MARKETING_VERSION = 0.1.0;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = (
 					"$(inherited)",

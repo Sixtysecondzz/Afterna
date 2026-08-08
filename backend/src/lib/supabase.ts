@@ -61,6 +61,39 @@ export function resolveUserId(authHeader: string | undefined): string {
   throw new AuthError("Invalid token");
 }
 
+/**
+ * Ensure auth.users + public.users exist for this id (guest "dev-user" maps to DEV_USER_ID).
+ * public.users FK requires auth.users first; signup trigger creates the public row.
+ */
+export async function ensureAppUser(userId: string, displayName = "Guest"): Promise<void> {
+  if (!hasSupabase()) {
+    memory.users.set(userId, { id: userId, display_name: displayName });
+    return;
+  }
+  const sb = getAdminClient();
+  const { data: existing } = await sb.from("users").select("id").eq("id", userId).maybeSingle();
+  if (existing) return;
+
+  const { data: authLookup, error: getErr } = await sb.auth.admin.getUserById(userId);
+  if (getErr || !authLookup?.user) {
+    const { error: createErr } = await sb.auth.admin.createUser({
+      id: userId,
+      email: userId === DEV_USER_ID ? "guest-dev@afterna.local" : `${userId}@users.afterna.local`,
+      email_confirm: true,
+      user_metadata: { full_name: displayName },
+    });
+    if (createErr && !/already|exists|registered/i.test(createErr.message)) {
+      throw createErr;
+    }
+  }
+
+  const { error: upsertErr } = await sb.from("users").upsert(
+    { id: userId, display_name: displayName },
+    { onConflict: "id" },
+  );
+  if (upsertErr) throw upsertErr;
+}
+
 export class AuthError extends Error {
   status = 401;
   constructor(message: string) {
