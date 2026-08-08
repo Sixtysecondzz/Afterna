@@ -529,7 +529,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = Afterna/Afterna.entitlements;
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = V5GB46FZ48;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Afterna/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Afterna;
@@ -541,7 +543,7 @@
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MARKETING_VERSION = 0.1.0;
-				ONLY_ACTIVE_ARCH = YES;
+				ONLY_ACTIVE_ARCH = NO;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -568,7 +570,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = Afterna/Afterna.entitlements;
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = V5GB46FZ48;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Afterna/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Afterna;
