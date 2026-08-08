@@ -74,11 +74,8 @@ archiveRoutes.post("/v1/conversations/archive", async (c) => {
     };
 
     await persistTranscript(userId, conversationId, transcript);
-    await setRecordingStatus(recordingId, "succeeded", {
-      provider: "assemblyai-streaming",
-      model: "universal-3-5-pro",
-      client_session_id: body.client_session_id,
-    });
+    // recordings table has no provider/model/client_session_id columns — status only
+    await setRecordingStatus(recordingId, "succeeded");
     await addTranscriptionUsage(userId, body.duration_ms);
 
     const extractJob = await enqueueJob({
