@@ -1,4 +1,4 @@
-# Afterna API + worker image (deploy from this directory: `cd backend && fly deploy`)
+# Afterna API image (deploy from this directory: `cd backend && fly deploy`)
 FROM node:22-bookworm-slim
 
 WORKDIR /app
@@ -14,5 +14,4 @@ ENV PORT=8080
 
 EXPOSE 8080
 
-# Default process is the API. Worker process overrides CMD in fly.toml.
 CMD ["npx", "tsx", "src/index.ts"]

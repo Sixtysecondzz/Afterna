@@ -46,8 +46,22 @@ app.post("/v1/worker/tick", async (c) => {
   return c.json({ processed: n });
 });
 
-serve({ fetch: app.fetch, port: config.port }, (info) => {
-  console.log(`Afterna API listening on http://localhost:${info.port} (fixture=${config.fixtureMode})`);
+/** Embedded worker — keeps Fly to a single process group (dashboard deploys are flaky with app+worker). */
+const WORKER_INTERVAL_MS = Number(process.env.WORKER_INTERVAL_MS ?? 2000);
+async function workerLoop() {
+  try {
+    const n = await processAvailableJobs(5);
+    if (n > 0) console.log(`[worker] processed ${n} job(s)`);
+  } catch (err) {
+    console.error("[worker] tick failed", err);
+  } finally {
+    setTimeout(workerLoop, WORKER_INTERVAL_MS);
+  }
+}
+
+serve({ fetch: app.fetch, port: config.port, hostname: "0.0.0.0" }, (info) => {
+  console.log(`Afterna API listening on http://0.0.0.0:${info.port} (fixture=${config.fixtureMode})`);
+  void workerLoop();
 });
 
 export default app;

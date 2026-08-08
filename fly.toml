@@ -1,11 +1,5 @@
 # Fly app for Afterna API (monorepo root).
-# Launch / deploy from the REPO ROOT so Fly finds this file + Dockerfile.
-#
-#   fly launch --copy-config --no-deploy
-#   fly secrets set ...
-#   fly deploy
-#
-# Or from backend/: use backend/fly.toml + backend/Dockerfile instead.
+# Deploy from Fly dashboard / GitHub — uses this file + root Dockerfile.
 
 app = "afterna"
 primary_region = "syd"
@@ -18,26 +12,14 @@ primary_region = "syd"
   FIXTURE_MODE = "false"
   NODE_ENV = "production"
 
-[processes]
-  app = "npx tsx src/index.ts"
-  worker = "npx tsx src/worker.ts"
-
 [http_service]
   internal_port = 8080
   force_https = true
   auto_stop_machines = "stop"
   auto_start_machines = true
   min_machines_running = 1
-  processes = ["app"]
 
 [[vm]]
   memory = "512mb"
   cpu_kind = "shared"
   cpus = 1
-  processes = ["app"]
-
-[[vm]]
-  memory = "512mb"
-  cpu_kind = "shared"
-  cpus = 1
-  processes = ["worker"]
