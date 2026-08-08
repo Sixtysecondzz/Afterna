@@ -30,7 +30,9 @@ struct SearchView: View {
                                 ConversationDetailView(conversation: item)
                             } label: {
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text(item.title).font(DesignTokens.titleFont)
+                                    Text(item.title)
+                                        .font(DesignTokens.titleFont)
+                                        .lineLimit(2)
                                     if let hit = item.segments.first(where: { $0.text.localizedCaseInsensitiveContains(query) }) {
                                         Text(hit.text)
                                             .font(.caption)

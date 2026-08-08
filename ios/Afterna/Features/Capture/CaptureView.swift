@@ -9,6 +9,7 @@ struct CaptureView: View {
     @State private var sessionId = UUID()
     @State private var isRecording = false
     @State private var statusText = "Ready when you are"
+    @State private var statusIsError = false
     @State private var pulse = false
     @State private var showCredits = false
     @State private var showImporter = false
@@ -37,7 +38,7 @@ struct CaptureView: View {
 
                 Text(statusText)
                     .font(DesignTokens.bodyFont)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(statusIsError ? DesignTokens.error : Color.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
 
@@ -50,6 +51,11 @@ struct CaptureView: View {
                         .fill(isRecording ? Color.red.opacity(0.85) : DesignTokens.accent)
                         .frame(width: 96, height: 96)
                         .scaleEffect(pulse && isRecording ? 1.08 : 1.0)
+                        .shadow(
+                            color: (isRecording ? Color.red : DesignTokens.accent).opacity(0.35),
+                            radius: 18,
+                            y: 6
+                        )
                         .overlay {
                             Image(systemName: isRecording ? "stop.fill" : "mic.fill")
                                 .font(.title)
@@ -151,6 +157,12 @@ struct CaptureView: View {
     }
 
     @MainActor
+    private func setStatus(_ text: String, isError: Bool = false) {
+        statusText = text
+        statusIsError = isError
+    }
+
+    @MainActor
     private func toggleRecording() async {
         if isRecording {
             await stopRecording()
@@ -162,13 +174,13 @@ struct CaptureView: View {
     @MainActor
     private func startRecording() async {
         guard container.credits.canStartRecording() else {
-            statusText = "Out of credits — watch an ad to earn more"
+            setStatus("Out of credits — watch an ad to earn more", isError: true)
             showCredits = true
             return
         }
         let allowed = await container.audio.requestPermission()
         guard allowed else {
-            statusText = "Microphone permission is required"
+            setStatus("Microphone permission is required", isError: true)
             return
         }
 
@@ -195,7 +207,7 @@ struct CaptureView: View {
                 },
                 onStatus: { message in
                     Task { @MainActor in
-                        if isRecording { statusText = message }
+                        if isRecording { setStatus(message) }
                     }
                 }
             )
@@ -205,10 +217,10 @@ struct CaptureView: View {
             }
             _ = try container.audio.start(sessionId: sessionId)
             isRecording = true
-            statusText = "Listening…"
+            setStatus("Listening…")
             Haptics.impact()
         } catch {
-            statusText = "Could not start: \(error.localizedDescription)"
+            setStatus("Could not start: \(error.localizedDescription)", isError: true)
             await streamClient.stop()
             container.audio.onPCMChunk = nil
         }
@@ -241,14 +253,14 @@ struct CaptureView: View {
             }
 
             if finalTurns.isEmpty {
-                statusText = "No speech captured — try again"
+                setStatus("No speech captured — try again", isError: true)
                 canArchive = false
             } else {
-                statusText = "Stopped — review captions, then Archive"
+                setStatus("Stopped — review captions, then Archive")
                 canArchive = true
             }
         } catch {
-            statusText = "Could not finish recording: \(error.localizedDescription)"
+            setStatus("Could not finish recording: \(error.localizedDescription)", isError: true)
             isRecording = false
             container.audio.onPCMChunk = nil
             await streamClient.stop()
@@ -259,7 +271,7 @@ struct CaptureView: View {
     private func archiveLiveSession() async {
         guard !finalTurns.isEmpty else { return }
         isArchiving = true
-        statusText = "Archiving…"
+        setStatus("Archiving…")
         defer { isArchiving = false }
 
         let segments = finalTurns
@@ -298,7 +310,7 @@ struct CaptureView: View {
             if container.usesMockUpload {
                 entity.statusRaw = "succeeded"
                 try? modelContext.save()
-                statusText = "Archived (mock) — open Memories for details"
+                setStatus("Archived (mock) — open Memories for details")
                 canArchive = false
                 Haptics.success()
                 showInterstitialAfterDelay()
@@ -321,7 +333,7 @@ struct CaptureView: View {
             }
             try? modelContext.save()
 
-            statusText = "Archived — key points are generating"
+            setStatus("Archived — key points are generating")
             canArchive = false
             Haptics.success()
             showInterstitialAfterDelay()
@@ -332,7 +344,7 @@ struct CaptureView: View {
         } catch {
             entity.statusRaw = "failed"
             try? modelContext.save()
-            statusText = "Archive failed: \(error.localizedDescription)"
+            setStatus("Archive failed: \(error.localizedDescription)", isError: true)
         }
     }
 
@@ -345,12 +357,12 @@ struct CaptureView: View {
             defer { if accessed { url.stopAccessingSecurityScopedResource() } }
 
             guard container.credits.canStartRecording() else {
-                statusText = "Out of credits — watch an ad to earn more"
+                setStatus("Out of credits — watch an ad to earn more", isError: true)
                 showCredits = true
                 return
             }
 
-            statusText = "Uploading audio for transcription…"
+            setStatus("Uploading audio for transcription…")
             let checksum = try UploadOutbox.sha256Hex(of: url)
             let attrs = try FileManager.default.attributesOfItem(atPath: url.path)
             let byteSize = (attrs[.size] as? NSNumber)?.intValue ?? 0
@@ -379,7 +391,7 @@ struct CaptureView: View {
                     TranscriptSegmentEntity(speakerLabel: "A", text: "Imported fixture transcript.", startMs: 0, endMs: durationMs)
                 ]
                 try? modelContext.save()
-                statusText = "Import ready (mock)"
+                setStatus("Import ready (mock)")
                 return
             }
 
@@ -395,9 +407,9 @@ struct CaptureView: View {
             if let jobId = item.jobId {
                 await pollJob(jobId, entity: entity, item: &item)
             }
-            statusText = "Import queued — transcription running"
+            setStatus("Import queued — transcription running")
         } catch {
-            statusText = "Import failed: \(error.localizedDescription)"
+            setStatus("Import failed: \(error.localizedDescription)", isError: true)
         }
     }
 
@@ -425,11 +437,11 @@ struct CaptureView: View {
                 let status = try await container.api.jobStatus(id: jobId)
                 if status.status == "succeeded" {
                     await container.memoryOrg.hydrateFromServer(entity, api: container.api, modelContext: modelContext)
-                    statusText = "Archived — key points ready in Memories"
+                    setStatus("Archived — key points ready in Memories")
                     return
                 }
                 if status.status == "failed" || status.status == "dead" {
-                    statusText = status.error ?? "Key points failed — you can retry from the memory"
+                    setStatus(status.error ?? "Key points failed — you can retry from the memory", isError: true)
                     return
                 }
             } catch {
@@ -451,12 +463,12 @@ struct CaptureView: View {
                 try? modelContext.save()
                 if status.status == "succeeded" {
                     await container.memoryOrg.hydrateFromServer(entity, api: container.api, modelContext: modelContext)
-                    statusText = "Transcribed — open it in Memories"
+                    setStatus("Transcribed — open it in Memories")
                     Haptics.success()
                     return
                 }
                 if status.status == "failed" || status.status == "dead" {
-                    statusText = status.error ?? "Transcription failed"
+                    setStatus(status.error ?? "Transcription failed", isError: true)
                     return
                 }
             } catch {

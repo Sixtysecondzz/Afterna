@@ -219,8 +219,9 @@ struct MemoriesView: View {
                 Text(item.title)
                     .font(DesignTokens.titleFont)
                     .foregroundStyle(DesignTokens.ink)
+                    .lineLimit(2)
                 HStack(spacing: DesignTokens.spaceS) {
-                    Text(formatDuration(item.durationMs))
+                    Text("\(relativeDate(item.createdAt)) · \(formatDuration(item.durationMs))")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     StatusChip(statusRaw: item.statusRaw)
@@ -239,6 +240,17 @@ struct MemoriesView: View {
     private func formatDuration(_ ms: Int) -> String {
         let s = max(ms / 1000, 0)
         return String(format: "%d:%02d", s / 60, s % 60)
+    }
+
+    /// "3:12 PM" today, "Yesterday 3:12 PM", otherwise "Aug 6, 2026".
+    private func relativeDate(_ date: Date) -> String {
+        if Calendar.current.isDateInToday(date) {
+            return date.formatted(date: .omitted, time: .shortened)
+        }
+        if Calendar.current.isDateInYesterday(date) {
+            return "Yesterday \(date.formatted(date: .omitted, time: .shortened))"
+        }
+        return date.formatted(date: .abbreviated, time: .omitted)
     }
 }
 

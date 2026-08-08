@@ -214,6 +214,15 @@
 			<string>3qcr597p9d.skadnetwork</string>
 		</dict>
 	</array>
+	<!-- Design system is a fixed light "paper" palette — lock light mode so dark mode never mixes surfaces. -->
+	<key>UIUserInterfaceStyle</key>
+	<string>Light</string>
+	<!-- Launch screen matches the paper background so startup has no white flash. -->
+	<key>UILaunchScreen</key>
+	<dict>
+		<key>UIColorName</key>
+		<string>LaunchBackground</string>
+	</dict>
 	<!-- Live API (Fly). Set AFTERNA_USE_MOCK_UPLOAD to true to force local mock upload. -->
 	<key>AFTERNA_API_BASE</key>
 	<string>https://afterna.fly.dev</string>

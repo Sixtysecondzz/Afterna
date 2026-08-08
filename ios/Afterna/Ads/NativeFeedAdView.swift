@@ -88,7 +88,13 @@ final class NativeAdCardView: NativeAdView {
         sponsoredLabel.font = .systemFont(ofSize: 11, weight: .semibold)
         sponsoredLabel.textColor = .secondaryLabel
 
-        headlineLabel.font = .systemFont(ofSize: 17, weight: .semibold)
+        // Serif headline to match the app's memory-row typography.
+        let headlineBase = UIFont.systemFont(ofSize: 17, weight: .semibold)
+        if let serifDescriptor = headlineBase.fontDescriptor.withDesign(.serif) {
+            headlineLabel.font = UIFont(descriptor: serifDescriptor, size: 17)
+        } else {
+            headlineLabel.font = headlineBase
+        }
         headlineLabel.textColor = UIColor(DesignTokens.ink)
         headlineLabel.numberOfLines = 2
 
