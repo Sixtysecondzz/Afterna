@@ -32,6 +32,9 @@ async function retrieveContext(userId: string, body: z.infer<typeof askSchema>) 
       if (body.scope === "conversation" && body.conversation_id && conversationId !== body.conversation_id) {
         continue;
       }
+      if (body.scope === "folder" && body.folder_id && String(conv.folder_id ?? "") !== body.folder_id) {
+        continue;
+      }
       for (const s of segments) {
         blocks.push({
           conversation_id: conversationId,
