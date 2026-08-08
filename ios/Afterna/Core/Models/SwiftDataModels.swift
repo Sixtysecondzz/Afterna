@@ -17,6 +17,10 @@ final class ConversationEntity {
     var summaryText: String?
     var keyPoints: [String] = []
     var decisions: [String] = []
+    /// Local client session used to promote a draft into a server archive.
+    var clientSessionId: UUID?
+    var userNotes: String?
+    var meetingTemplate: String?
     @Relationship(deleteRule: .cascade, inverse: \TranscriptSegmentEntity.conversation)
     var segments: [TranscriptSegmentEntity]
     @Relationship(deleteRule: .cascade, inverse: \QuoteEntity.conversation)

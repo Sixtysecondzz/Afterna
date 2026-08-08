@@ -73,6 +73,61 @@ final class MemoryOrgStore {
         }
     }
 
+    // MARK: Draft archive
+
+    /// Promotes a local draft (status `draft`) to a server-backed memory with extract.
+    func archiveDraft(
+        _ conversation: ConversationEntity,
+        api: APIClient,
+        modelContext: ModelContext,
+        usesMockUpload: Bool
+    ) async throws {
+        let segments = conversation.segments
+            .sorted { $0.startMs < $1.startMs }
+            .filter { !$0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        guard !segments.isEmpty else {
+            throw DataAPIError.http(400, "Draft has no transcript to archive")
+        }
+
+        conversation.statusRaw = "processing"
+        try? modelContext.save()
+
+        if usesMockUpload {
+            conversation.statusRaw = "succeeded"
+            try? modelContext.save()
+            return
+        }
+
+        let payload = segments.map {
+            ArchiveSegmentPayload(
+                speakerLabel: $0.speakerLabel,
+                text: $0.text,
+                startMs: $0.startMs,
+                endMs: max($0.endMs, $0.startMs),
+                confidence: nil
+            )
+        }
+        let sessionId = conversation.clientSessionId ?? conversation.id
+        let notes = conversation.userNotes?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let response = try await api.archiveLiveTranscript(
+            clientSessionId: sessionId,
+            durationMs: conversation.durationMs,
+            title: conversation.title,
+            language: "en",
+            segments: payload,
+            userNotes: (notes?.isEmpty == false) ? notes : nil,
+            template: conversation.meetingTemplate
+        )
+        conversation.serverRecordingId = response.recordingId
+        conversation.serverConversationId = response.conversationId
+        conversation.jobId = response.extractJobId
+        conversation.statusRaw = "succeeded"
+        if let remoteTitle = response.title, !remoteTitle.isEmpty {
+            conversation.title = remoteTitle
+        }
+        try? modelContext.save()
+    }
+
     // MARK: Server hydration
 
     /// Pulls segments, summary/key points, and extract-generated action items from the backend

@@ -77,13 +77,15 @@ final class StreamingMicEngine: NSObject, AudioCapturing {
 
     private func startEngine(writingTo url: URL) throws {
         let session = AVAudioSession.sharedInstance()
+        // playAndRecord + audio UIBackgroundMode keeps capture running when the screen locks.
+        // Avoid .measurement here — it is more aggressive about pausing in background.
         try session.setCategory(
             .playAndRecord,
-            mode: .measurement,
-            options: [.defaultToSpeaker, .allowBluetoothHFP]
+            mode: .voiceChat,
+            options: [.defaultToSpeaker, .allowBluetoothHFP, .mixWithOthers]
         )
         try session.setPreferredSampleRate(16_000)
-        try session.setActive(true, options: .notifyOthersOnDeactivation)
+        try session.setActive(true)
 
         let input = engine.inputNode
         let inputFormat = input.outputFormat(forBus: 0)

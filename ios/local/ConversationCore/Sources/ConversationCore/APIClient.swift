@@ -83,15 +83,26 @@ public actor APIClient {
         try await authorizedGet(path: "v1/conversations/\(id.uuidString.lowercased())/transcript")
     }
 
-    public func ask(question: String, conversationId: UUID?, scope: String = "conversation") async throws -> AskResponse {
+    public func ask(
+        question: String,
+        conversationId: UUID?,
+        scope: String = "conversation",
+        folderId: UUID? = nil
+    ) async throws -> AskResponse {
         struct Body: Encodable {
             let question: String
             let scope: String
             let conversation_id: UUID?
+            let folder_id: UUID?
         }
         return try await authorizedPost(
             path: "v1/ask",
-            body: Body(question: question, scope: scope, conversation_id: conversationId)
+            body: Body(
+                question: question,
+                scope: scope,
+                conversation_id: conversationId,
+                folder_id: folderId
+            )
         )
     }
 
@@ -125,7 +136,9 @@ public actor APIClient {
         durationMs: Int,
         title: String?,
         language: String = "en",
-        segments: [ArchiveSegmentPayload]
+        segments: [ArchiveSegmentPayload],
+        userNotes: String? = nil,
+        template: String? = nil
     ) async throws -> ArchiveLiveResponse {
         struct Body: Encodable {
             let client_session_id: String
@@ -133,6 +146,8 @@ public actor APIClient {
             let title: String?
             let language: String
             let segments: [ArchiveSegmentPayload]
+            let user_notes: String?
+            let template: String?
         }
         return try await authorizedPost(
             path: "v1/conversations/archive",
@@ -141,8 +156,19 @@ public actor APIClient {
                 duration_ms: durationMs,
                 title: title,
                 language: language,
-                segments: segments
+                segments: segments,
+                user_notes: userNotes,
+                template: template
             )
+        )
+    }
+
+    /// Create a public/unlisted share link for a memory (summary + key points + transcript excerpt).
+    public func createShareLink(conversationId: UUID) async throws -> CreateShareLinkResponse {
+        struct EmptyBody: Encodable {}
+        return try await authorizedPost(
+            path: "v1/conversations/\(conversationId.uuidString.lowercased())/share",
+            body: EmptyBody()
         )
     }
 

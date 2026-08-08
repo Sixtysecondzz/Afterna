@@ -375,3 +375,9 @@ public struct ArchiveLiveResponse: Codable, Sendable {
         case status, title, message
     }
 }
+
+/// `POST /v1/conversations/:id/share` — public/unlisted note link.
+public struct CreateShareLinkResponse: Codable, Sendable {
+    public var url: URL
+    public var token: String
+}

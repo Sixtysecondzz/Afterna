@@ -22,12 +22,22 @@ const segmentSchema = z.object({
   confidence: z.number().nullable().optional(),
 });
 
+const meetingTemplateSchema = z.enum([
+  "general",
+  "one_on_one",
+  "standup",
+  "sales",
+  "interview",
+]);
+
 const bodySchema = z.object({
   client_session_id: z.string().min(1),
   duration_ms: z.number().int().nonnegative().default(0),
   title: z.string().optional(),
   language: z.string().optional(),
   segments: z.array(segmentSchema).min(1),
+  user_notes: z.string().max(8000).nullish(),
+  template: meetingTemplateSchema.nullish(),
 });
 
 /**
@@ -78,12 +88,19 @@ archiveRoutes.post("/v1/conversations/archive", async (c) => {
     await setRecordingStatus(recordingId, "succeeded");
     await addTranscriptionUsage(userId, body.duration_ms);
 
+    const userNotes = body.user_notes?.trim() || null;
+    const template = body.template ?? "general";
+
     const extractJob = await enqueueJob({
       userId,
       jobType: "extract",
       idempotencyKey: `extract:${conversationId}:${config.promptVersion}`,
       recordingId,
       conversationId,
+      payload: {
+        user_notes: userNotes,
+        template,
+      },
     });
     await enqueueJob({
       userId,

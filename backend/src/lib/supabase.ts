@@ -35,6 +35,8 @@ export const memory = {
   embeddings: new Map<string, Record<string, unknown>[]>(),
   queries: [] as Record<string, unknown>[],
   audioBlobs: new Map<string, Buffer>(),
+  /** token → shared note row (fixture / memory mode). */
+  sharedNotes: new Map<string, Record<string, unknown>>(),
 };
 
 memory.users.set(DEV_USER_ID, { id: DEV_USER_ID, display_name: "Dev User" });

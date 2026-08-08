@@ -42,6 +42,9 @@ targets:
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
         INFOPLIST_KEY_NSMicrophoneUsageDescription: Afterna records conversations you choose to capture.
+        INFOPLIST_KEY_NSCalendarsUsageDescription: Afterna uses your calendar to suggest titles for meetings you record.
+        INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription: Afterna uses your calendar to suggest titles for meetings you record.
+        INFOPLIST_KEY_UIBackgroundModes: [audio]
         CURRENT_PROJECT_VERSION: "1"
         MARKETING_VERSION: "0.1.0"
         TARGETED_DEVICE_FAMILY: "1"

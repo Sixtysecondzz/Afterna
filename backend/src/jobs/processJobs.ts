@@ -135,7 +135,13 @@ async function runExtract(job: AiJobRow): Promise<void> {
   const segmentContext = segments
     .map((s) => `${s.id}|${s.t_start_ms}-${s.t_end_ms}|${s.text}`)
     .join("\n");
-  const extracted = await extractFromTranscript(transcriptText, segmentContext);
+  const payload = (job.payload ?? {}) as Record<string, unknown>;
+  const userNotes = typeof payload.user_notes === "string" ? payload.user_notes : null;
+  const template = typeof payload.template === "string" ? payload.template : null;
+  const extracted = await extractFromTranscript(transcriptText, segmentContext, {
+    userNotes,
+    template,
+  });
 
   if (!hasSupabase()) {
     memory.summaries.set(conversationId, {

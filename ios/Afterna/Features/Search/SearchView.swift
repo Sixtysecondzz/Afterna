@@ -2,8 +2,11 @@ import SwiftUI
 import SwiftData
 
 struct SearchView: View {
+    @Environment(AppContainer.self) private var container
     @Query private var conversations: [ConversationEntity]
     @State private var query = ""
+    @State private var showAsk = false
+    @State private var globalAskEnabled = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -51,6 +54,25 @@ struct SearchView: View {
         }
         .navigationTitle("Search")
         .searchable(text: $query, prompt: "Search memories")
+        .toolbar {
+            if globalAskEnabled {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showAsk = true
+                    } label: {
+                        Image(systemName: "sparkles")
+                    }
+                    .accessibilityLabel("Ask AI across memories")
+                }
+            }
+        }
+        .sheet(isPresented: $showAsk) {
+            AskAISheet(conversation: nil)
+        }
+        .task {
+            let config = container.flags.current()
+            globalAskEnabled = config.featureFlags.askAI && config.featureFlags.crossConversationSearch
+        }
     }
 
     private var filtered: [ConversationEntity] {

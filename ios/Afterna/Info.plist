@@ -214,6 +214,16 @@
 			<string>3qcr597p9d.skadnetwork</string>
 		</dict>
 	</array>
+	<!-- Keep mic + streaming alive when the screen locks mid-meeting. -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+	</array>
+	<!-- Calendar: EventKit full access (iOS 17+) + legacy key for older OS strings. -->
+	<key>NSCalendarsUsageDescription</key>
+	<string>Afterna uses your calendar to suggest titles for meetings you record.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Afterna uses your calendar to suggest titles for meetings you record.</string>
 	<!-- Design system is a fixed light "paper" palette — lock light mode so dark mode never mixes surfaces. -->
 	<key>UIUserInterfaceStyle</key>
 	<string>Light</string>

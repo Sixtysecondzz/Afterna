@@ -33,6 +33,7 @@ enum ConversationStatus {
     static func label(_ raw: String) -> String {
         switch raw {
         case "succeeded", "ready": return "Ready"
+        case "draft": return "Draft"
         case "processing", "transcribing", "running": return "Processing…"
         case "uploading": return "Uploading…"
         case "queued": return "Queued"
@@ -45,6 +46,7 @@ enum ConversationStatus {
     static func color(_ raw: String) -> Color {
         switch raw {
         case "succeeded", "ready": return DesignTokens.success
+        case "draft": return DesignTokens.accent
         case "failed", "dead": return DesignTokens.error
         case "local": return DesignTokens.textSecondary
         default: return DesignTokens.accent

@@ -54,6 +54,16 @@ async function retrieveContext(userId: string, body: z.infer<typeof askSchema>) 
     .limit(20);
   if (body.scope === "conversation" && body.conversation_id) {
     q = q.eq("conversation_id", body.conversation_id);
+  } else if (body.scope === "folder" && body.folder_id) {
+    const { data: folderConvs, error: folderErr } = await sb
+      .from("conversations")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("folder_id", body.folder_id);
+    if (folderErr) throw folderErr;
+    const ids = (folderConvs ?? []).map((c) => c.id as string);
+    if (ids.length === 0) return [];
+    q = q.in("conversation_id", ids);
   }
   const { data, error } = await q;
   if (error) throw error;

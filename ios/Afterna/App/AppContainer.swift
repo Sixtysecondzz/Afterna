@@ -14,6 +14,7 @@ final class AppContainer {
     let auth: AuthService
     let credits: CreditsWallet
     let memoryOrg: MemoryOrgStore
+    let calendar: CalendarService
 
     init(useMockUpload: Bool? = nil) {
         let schema = Schema([
@@ -39,6 +40,7 @@ final class AppContainer {
             welcomeCredits: AdMobConfig.welcomeCredits
         )
         self.memoryOrg = MemoryOrgStore(auth: auth, tokenStore: auth.tokenStore)
+        self.calendar = CalendarService()
         let mock = useMockUpload ?? APIConfig.useMockUpload
         self.usesMockUpload = mock
         self.uploadOutbox = mock ? MockUploading() : UploadOutbox(api: api)

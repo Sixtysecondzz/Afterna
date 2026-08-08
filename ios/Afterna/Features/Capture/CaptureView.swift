@@ -5,6 +5,7 @@ import UniformTypeIdentifiers
 struct CaptureView: View {
     @Environment(AppContainer.self) private var container
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
 
     @State private var sessionId = UUID()
     @State private var isRecording = false
@@ -21,6 +22,10 @@ struct CaptureView: View {
     @State private var canArchive = false
     @State private var isArchiving = false
     @State private var processingItem: OutboxItem?
+    /// Local draft saved the moment recording stops — survives tab switches / kills.
+    @State private var draftEntity: ConversationEntity?
+    @State private var userNotes = ""
+    @State private var meetingTemplate: MeetingTemplate = .general
 
     var body: some View {
         ZStack {
@@ -36,6 +41,9 @@ struct CaptureView: View {
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(.secondary)
 
+                // Calendar awareness: upcoming meetings → auto-title on archive
+                UpcomingMeetingBanner(calendar: container.calendar)
+
                 Text(statusText)
                     .font(DesignTokens.bodyFont)
                     .foregroundStyle(statusIsError ? DesignTokens.error : Color.secondary)
@@ -43,6 +51,10 @@ struct CaptureView: View {
                     .padding(.horizontal)
 
                 captionsPanel
+
+                if isRecording || canArchive {
+                    notesField
+                }
 
                 Button {
                     Task { await toggleRecording() }
@@ -66,6 +78,10 @@ struct CaptureView: View {
                 .disabled(isArchiving)
                 .accessibilityLabel(isRecording ? "Stop recording" : "Start recording")
 
+                if !isRecording {
+                    templatePicker
+                }
+
                 if canArchive && !isRecording {
                     Button {
                         Task { await archiveLiveSession() }
@@ -77,8 +93,17 @@ struct CaptureView: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(DesignTokens.accent)
-                    .disabled(isArchiving || finalTurns.isEmpty)
+                    .disabled(isArchiving || (finalTurns.isEmpty && draftEntity == nil))
                     .padding(.horizontal, 24)
+                    .accessibilityLabel("Archive and extract key points")
+
+                    if draftEntity != nil {
+                        Text("Draft saved in Memories — safe if you leave this screen.")
+                            .font(.caption)
+                            .foregroundStyle(DesignTokens.textSecondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 24)
+                    }
                 }
 
                 if !isRecording {
@@ -111,6 +136,15 @@ struct CaptureView: View {
         .onAppear {
             withAnimation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true)) {
                 pulse = true
+            }
+            Task { await container.calendar.prepareForCapture() }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            guard isRecording else { return }
+            if phase == .background || phase == .inactive {
+                setStatus("Recording in background — keep going")
+            } else if phase == .active {
+                setStatus("Listening…")
             }
         }
     }
@@ -156,6 +190,47 @@ struct CaptureView: View {
         .padding(.horizontal, 8)
     }
 
+    private var notesField: some View {
+        TextField("Live notes (optional)", text: $userNotes, axis: .vertical)
+            .lineLimit(2...4)
+            .font(.footnote)
+            .padding(10)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+            .padding(.horizontal, 8)
+            .disabled(isArchiving)
+            .accessibilityLabel("Live notes")
+            .onChange(of: userNotes) { _, newValue in
+                guard let draft = draftEntity else { return }
+                draft.userNotes = newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                    ? nil
+                    : newValue
+                try? modelContext.save()
+            }
+    }
+
+    private var templatePicker: some View {
+        HStack(spacing: 8) {
+            Text("Template")
+                .font(.caption.weight(.medium))
+                .foregroundStyle(.secondary)
+            Spacer(minLength: 8)
+            Picker("Template", selection: $meetingTemplate) {
+                ForEach(MeetingTemplate.allCases) { template in
+                    Text(template.label).tag(template)
+                }
+            }
+            .pickerStyle(.menu)
+            .tint(DesignTokens.accent)
+        }
+        .padding(.horizontal, 24)
+        .disabled(isArchiving)
+        .onChange(of: meetingTemplate) { _, newValue in
+            guard let draft = draftEntity else { return }
+            draft.meetingTemplate = newValue.rawValue
+            try? modelContext.save()
+        }
+    }
+
     @MainActor
     private func setStatus(_ text: String, isError: Bool = false) {
         statusText = text
@@ -189,6 +264,8 @@ struct CaptureView: View {
         partialText = ""
         canArchive = false
         processingItem = nil
+        draftEntity = nil
+        userNotes = ""
 
         do {
             try await streamClient.start(
@@ -256,7 +333,8 @@ struct CaptureView: View {
                 setStatus("No speech captured — try again", isError: true)
                 canArchive = false
             } else {
-                setStatus("Stopped — review captions, then Archive")
+                saveDraftFromCaptions()
+                setStatus("Draft saved — Archive for key points when ready")
                 canArchive = true
             }
         } catch {
@@ -267,44 +345,102 @@ struct CaptureView: View {
         }
     }
 
+    /// Writes a local draft conversation + segments the moment recording stops.
     @MainActor
-    private func archiveLiveSession() async {
-        guard !finalTurns.isEmpty else { return }
-        isArchiving = true
-        setStatus("Archiving…")
-        defer { isArchiving = false }
-
-        let segments = finalTurns
+    private func saveDraftFromCaptions() {
+        let turns = finalTurns
             .filter { !$0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-            .map {
-                ArchiveSegmentPayload(
-                    speakerLabel: $0.speakerLabel,
-                    text: $0.text,
-                    startMs: $0.startMs,
-                    endMs: max($0.endMs, $0.startMs),
-                    confidence: nil
-                )
-            }
+        guard !turns.isEmpty else { return }
 
-        let title = "Conversation \(Date.now.formatted(date: .abbreviated, time: .shortened))"
-        let entity = ConversationEntity(
-            title: title,
-            durationMs: lastDurationMs,
-            statusRaw: "processing",
-            recordingFileName: nil
-        )
-        modelContext.insert(entity)
-        for seg in segments {
+        let title = container.calendar.selectedTitle
+            ?? "Conversation \(Date.now.formatted(date: .abbreviated, time: .shortened))"
+        let entity: ConversationEntity
+        if let existing = draftEntity {
+            entity = existing
+            entity.title = title
+            entity.durationMs = lastDurationMs
+            entity.statusRaw = "draft"
+            entity.clientSessionId = sessionId
+            for old in entity.segments {
+                modelContext.delete(old)
+            }
+        } else {
+            entity = ConversationEntity(
+                title: title,
+                durationMs: lastDurationMs,
+                statusRaw: "draft",
+                recordingFileName: nil
+            )
+            entity.clientSessionId = sessionId
+            modelContext.insert(entity)
+            draftEntity = entity
+        }
+        let trimmedNotes = userNotes.trimmingCharacters(in: .whitespacesAndNewlines)
+        entity.userNotes = trimmedNotes.isEmpty ? nil : trimmedNotes
+        entity.meetingTemplate = meetingTemplate.rawValue
+
+        for turn in turns {
             let row = TranscriptSegmentEntity(
-                speakerLabel: seg.speakerLabel,
-                text: seg.text,
-                startMs: seg.startMs,
-                endMs: seg.endMs
+                speakerLabel: turn.speakerLabel,
+                text: turn.text,
+                startMs: turn.startMs,
+                endMs: max(turn.endMs, turn.startMs)
             )
             row.conversation = entity
             modelContext.insert(row)
         }
         try? modelContext.save()
+    }
+
+    @MainActor
+    private func archiveLiveSession() async {
+        if draftEntity == nil, !finalTurns.isEmpty {
+            saveDraftFromCaptions()
+        }
+        guard let entity = draftEntity else { return }
+
+        let segments: [ArchiveSegmentPayload]
+        if !finalTurns.isEmpty {
+            segments = finalTurns
+                .filter { !$0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+                .map {
+                    ArchiveSegmentPayload(
+                        speakerLabel: $0.speakerLabel,
+                        text: $0.text,
+                        startMs: $0.startMs,
+                        endMs: max($0.endMs, $0.startMs),
+                        confidence: nil
+                    )
+                }
+        } else {
+            segments = entity.segments
+                .sorted { $0.startMs < $1.startMs }
+                .map {
+                    ArchiveSegmentPayload(
+                        speakerLabel: $0.speakerLabel,
+                        text: $0.text,
+                        startMs: $0.startMs,
+                        endMs: max($0.endMs, $0.startMs),
+                        confidence: nil
+                    )
+                }
+        }
+        guard !segments.isEmpty else { return }
+
+        isArchiving = true
+        setStatus("Archiving…")
+        entity.statusRaw = "processing"
+        if let calendarTitle = container.calendar.selectedTitle {
+            entity.title = calendarTitle
+        }
+        let trimmedNotes = userNotes.trimmingCharacters(in: .whitespacesAndNewlines)
+        let notesPayload = trimmedNotes.isEmpty ? nil : trimmedNotes
+        entity.userNotes = notesPayload
+        entity.meetingTemplate = meetingTemplate.rawValue
+        try? modelContext.save()
+        defer { isArchiving = false }
+
+        let archiveSessionId = entity.clientSessionId ?? sessionId
 
         do {
             if container.usesMockUpload {
@@ -312,17 +448,20 @@ struct CaptureView: View {
                 try? modelContext.save()
                 setStatus("Archived (mock) — open Memories for details")
                 canArchive = false
+                draftEntity = nil
                 Haptics.success()
                 showInterstitialAfterDelay()
                 return
             }
 
             let response = try await container.api.archiveLiveTranscript(
-                clientSessionId: sessionId,
-                durationMs: lastDurationMs,
-                title: title,
+                clientSessionId: archiveSessionId,
+                durationMs: entity.durationMs,
+                title: entity.title,
                 language: "en",
-                segments: segments
+                segments: segments,
+                userNotes: notesPayload,
+                template: meetingTemplate.rawValue
             )
             entity.serverRecordingId = response.recordingId
             entity.serverConversationId = response.conversationId
@@ -335,6 +474,7 @@ struct CaptureView: View {
 
             setStatus("Archived — key points are generating")
             canArchive = false
+            draftEntity = nil
             Haptics.success()
             showInterstitialAfterDelay()
 
@@ -342,7 +482,7 @@ struct CaptureView: View {
                 await pollExtract(extractId, entity: entity)
             }
         } catch {
-            entity.statusRaw = "failed"
+            entity.statusRaw = "draft"
             try? modelContext.save()
             setStatus("Archive failed: \(error.localizedDescription)", isError: true)
         }
@@ -484,6 +624,26 @@ struct CaptureView: View {
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         _ = try? await URLSession.shared.data(for: req)
+    }
+}
+
+enum MeetingTemplate: String, CaseIterable, Identifiable, Sendable {
+    case general
+    case oneOnOne = "one_on_one"
+    case standup
+    case sales
+    case interview
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .general: return "General"
+        case .oneOnOne: return "1:1"
+        case .standup: return "Standup"
+        case .sales: return "Sales"
+        case .interview: return "Interview"
+        }
     }
 }
 

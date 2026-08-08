@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import UIKit
 
 struct ConversationDetailView: View {
     @Bindable var conversation: ConversationEntity
@@ -11,10 +12,17 @@ struct ConversationDetailView: View {
     @State private var isHydrating = false
 
     @State private var showAsk = false
+    @State private var askAIEnabled = false
+    @State private var crossConversationEnabled = false
     @State private var showRename = false
     @State private var renameText = ""
     @State private var quoteToDelete: QuoteEntity?
     @State private var todoToDelete: ActionItemEntity?
+    @State private var shareLinkURL: URL?
+    @State private var shareLinkError: String?
+    @State private var isCreatingShareLink = false
+    @State private var isArchivingDraft = false
+    @State private var archiveDraftError: String?
 
     private var sortedQuotes: [QuoteEntity] {
         conversation.quotes.sorted { $0.createdAt > $1.createdAt }
@@ -54,13 +62,15 @@ struct ConversationDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
-                Button {
-                    showAsk = true
-                } label: {
-                    Image(systemName: "sparkles")
+                if askAIEnabled {
+                    Button {
+                        showAsk = true
+                    } label: {
+                        Image(systemName: "sparkles")
+                    }
+                    .disabled(conversation.serverConversationId == nil && !crossConversationEnabled)
+                    .accessibilityLabel("Ask AI about this memory")
                 }
-                .disabled(conversation.serverConversationId == nil)
-                .accessibilityLabel("Ask AI about this memory")
 
                 ShareLink(item: exportText, subject: Text(conversation.title)) {
                     Image(systemName: "square.and.arrow.up")
@@ -68,6 +78,16 @@ struct ConversationDetailView: View {
                 .accessibilityLabel("Share transcript and summary")
 
                 Menu {
+                    Button {
+                        Task { await createAndShareLink() }
+                    } label: {
+                        Label(
+                            isCreatingShareLink ? "Creating link…" : "Copy share link",
+                            systemImage: "link"
+                        )
+                    }
+                    .disabled(conversation.serverConversationId == nil || isCreatingShareLink)
+
                     Button {
                         Task { await container.memoryOrg.togglePin(conversation, modelContext: modelContext) }
                     } label: {
@@ -86,6 +106,9 @@ struct ConversationDetailView: View {
             }
         }
         .task {
+            let config = container.flags.current()
+            askAIEnabled = config.featureFlags.askAI
+            crossConversationEnabled = config.featureFlags.crossConversationSearch
             await hydrate()
         }
         .sheet(isPresented: $showAsk) {
@@ -128,6 +151,22 @@ struct ConversationDetailView: View {
             }
             Button("Cancel", role: .cancel) { todoToDelete = nil }
         }
+        .sheet(isPresented: Binding(
+            get: { shareLinkURL != nil },
+            set: { if !$0 { shareLinkURL = nil } }
+        )) {
+            if let shareLinkURL {
+                ActivityView(activityItems: [shareLinkURL])
+            }
+        }
+        .alert("Couldn’t create share link", isPresented: Binding(
+            get: { shareLinkError != nil },
+            set: { if !$0 { shareLinkError = nil } }
+        )) {
+            Button("OK", role: .cancel) { shareLinkError = nil }
+        } message: {
+            Text(shareLinkError ?? "Try again in a moment.")
+        }
         .overlay(alignment: .bottom) {
             if let quoteSavedMessage {
                 Text(quoteSavedMessage)
@@ -137,6 +176,27 @@ struct ConversationDetailView: View {
                     .background(.ultraThinMaterial, in: Capsule())
                     .padding(.bottom, 24)
             }
+        }
+    }
+
+    private func createAndShareLink() async {
+        guard let conversationId = conversation.serverConversationId else {
+            shareLinkError = "This memory only exists on this device. Archive it first to create a share link."
+            return
+        }
+        isCreatingShareLink = true
+        defer { isCreatingShareLink = false }
+        do {
+            let created = try await container.api.createShareLink(conversationId: conversationId)
+            UIPasteboard.general.string = created.url.absoluteString
+            withAnimation {
+                quoteSavedMessage = "Share link copied"
+            }
+            shareLinkURL = created.url
+            try? await Task.sleep(nanoseconds: 1_500_000_000)
+            withAnimation { quoteSavedMessage = nil }
+        } catch {
+            shareLinkError = "Check your connection and try again."
         }
     }
 
@@ -157,6 +217,10 @@ struct ConversationDetailView: View {
                         .font(DesignTokens.titleFont)
                     Spacer()
                     StatusChip(statusRaw: conversation.statusRaw)
+                }
+
+                if conversation.statusRaw == "draft" {
+                    draftArchiveCard
                 }
 
                 summaryContent
@@ -184,12 +248,60 @@ struct ConversationDetailView: View {
         .refreshable { await hydrate() }
     }
 
+    private var draftArchiveCard: some View {
+        VStack(alignment: .leading, spacing: DesignTokens.spaceS) {
+            infoCard(
+                symbol: "tray.and.arrow.down",
+                text: "This draft is saved on your device. Archive it to generate a summary and key points."
+            )
+            Button {
+                Task { await archiveDraft() }
+            } label: {
+                Text(isArchivingDraft ? "Archiving…" : "Archive & extract key points")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(DesignTokens.accent)
+            .disabled(isArchivingDraft || conversation.segments.isEmpty)
+            .accessibilityLabel("Archive draft and extract key points")
+
+            if let archiveDraftError {
+                Text(archiveDraftError)
+                    .font(.footnote)
+                    .foregroundStyle(DesignTokens.error)
+            }
+        }
+    }
+
+    @MainActor
+    private func archiveDraft() async {
+        isArchivingDraft = true
+        archiveDraftError = nil
+        defer { isArchivingDraft = false }
+        do {
+            try await container.memoryOrg.archiveDraft(
+                conversation,
+                api: container.api,
+                modelContext: modelContext,
+                usesMockUpload: container.usesMockUpload
+            )
+            Haptics.success()
+            await hydrate()
+        } catch {
+            archiveDraftError = error.localizedDescription
+        }
+    }
+
     @ViewBuilder
     private var summaryContent: some View {
         if let summary = conversation.summaryText, !summary.isEmpty {
             Text(summary)
                 .font(DesignTokens.bodyFont)
                 .foregroundStyle(DesignTokens.ink)
+        } else if conversation.statusRaw == "draft" {
+            EmptyView()
         } else if conversation.serverConversationId == nil {
             infoCard(
                 symbol: "iphone",
@@ -468,120 +580,12 @@ enum DetailTab: CaseIterable {
     }
 }
 
-// MARK: - Ask AI
+private struct ActivityView: UIViewControllerRepresentable {
+    let activityItems: [Any]
 
-struct AskAISheet: View {
-    let conversation: ConversationEntity
-    @Environment(AppContainer.self) private var container
-    @Environment(\.dismiss) private var dismiss
-
-    @State private var question = ""
-    @State private var answer: AskResponse?
-    @State private var busy = false
-    @State private var errorText: String?
-    @FocusState private var questionFocused: Bool
-
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: DesignTokens.spaceM) {
-                    Text("Ask about this memory")
-                        .font(DesignTokens.titleFont)
-                        .foregroundStyle(DesignTokens.ink)
-
-                    HStack(spacing: DesignTokens.spaceS) {
-                        TextField("e.g. What did we decide?", text: $question, axis: .vertical)
-                            .textFieldStyle(.roundedBorder)
-                            .focused($questionFocused)
-                            .onSubmit { Task { await ask() } }
-                        Button {
-                            Task { await ask() }
-                        } label: {
-                            Image(systemName: "arrow.up.circle.fill")
-                                .font(.title2)
-                        }
-                        .disabled(busy || question.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                        .accessibilityLabel("Ask")
-                    }
-
-                    if busy {
-                        HStack(spacing: DesignTokens.spaceS) {
-                            ProgressView()
-                            Text("Thinking…")
-                                .foregroundStyle(DesignTokens.textSecondary)
-                        }
-                    }
-
-                    if let errorText {
-                        Text(errorText)
-                            .font(.footnote)
-                            .foregroundStyle(DesignTokens.error)
-                    }
-
-                    if let answer {
-                        Text(answer.answer)
-                            .font(DesignTokens.bodyFont)
-                            .padding(DesignTokens.spaceM)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(DesignTokens.mist.opacity(0.5), in: RoundedRectangle(cornerRadius: DesignTokens.radius))
-
-                        if !answer.citations.isEmpty {
-                            Text("From the conversation")
-                                .font(.headline)
-                            ForEach(answer.citations) { citation in
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("“\(citation.quote)”")
-                                        .font(.callout)
-                                    HStack {
-                                        if let speaker = citation.speakerLabel {
-                                            Text("Speaker \(speaker)")
-                                        }
-                                        Text(formatMs(citation.tStartMs))
-                                    }
-                                    .font(.caption)
-                                    .foregroundStyle(DesignTokens.accent)
-                                }
-                                .padding(DesignTokens.spaceS)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .background(DesignTokens.paper, in: RoundedRectangle(cornerRadius: DesignTokens.radius))
-                            }
-                        }
-                    }
-
-                    Spacer(minLength: 0)
-                }
-                .padding()
-            }
-            .background(DesignTokens.paper)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
-                }
-            }
-            .onAppear { questionFocused = true }
-        }
-        .presentationDetents([.medium, .large])
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
     }
 
-    private func ask() async {
-        let trimmed = question.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, !busy else { return }
-        busy = true
-        errorText = nil
-        defer { busy = false }
-        do {
-            answer = try await container.api.ask(
-                question: trimmed,
-                conversationId: conversation.serverConversationId,
-                scope: "conversation"
-            )
-        } catch {
-            errorText = "Couldn’t get an answer — check your connection and try again."
-        }
-    }
-
-    private func formatMs(_ ms: Int) -> String {
-        let s = ms / 1000
-        return String(format: "%d:%02d", s / 60, s % 60)
-    }
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }

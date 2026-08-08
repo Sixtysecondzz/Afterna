@@ -8,14 +8,49 @@ function client(): OpenAI {
   return new OpenAI({ apiKey: config.openAiApiKey });
 }
 
-const EXTRACT_SYSTEM = `Extract only what is explicitly supported by the transcript. Prefer null over invention.
+export type MeetingTemplate = "general" | "one_on_one" | "standup" | "sales" | "interview";
+
+const EXTRACT_SYSTEM = `Extract only what is explicitly supported by the transcript (and user notes when they clarify something already in the transcript). Prefer null over invention.
+If user notes conflict with the transcript, trust the transcript and ignore unsupported note claims.
 Attach segment_ids for every decision/action/deadline.
 Return JSON with keys: summary, key_points, decisions, action_items, deadlines, entities.`;
 
-export async function extractFromTranscript(transcriptText: string, segmentContext: string) {
+const TEMPLATE_GUIDANCE: Record<MeetingTemplate, string> = {
+  general: "Balanced extract: summary, key points, decisions, and action items.",
+  one_on_one:
+    "1:1 focus: personal commitments, feedback, growth topics, and follow-ups for each person.",
+  standup: "Standup focus: what was done, what's next, and blockers.",
+  sales: "Sales focus: customer needs, objections, deal signals, next steps, and owners.",
+  interview:
+    "Interview focus: candidate strengths/concerns, evidence from answers, and hiring next steps.",
+};
+
+function normalizeTemplate(value: unknown): MeetingTemplate {
+  if (
+    value === "general" ||
+    value === "one_on_one" ||
+    value === "standup" ||
+    value === "sales" ||
+    value === "interview"
+  ) {
+    return value;
+  }
+  return "general";
+}
+
+export async function extractFromTranscript(
+  transcriptText: string,
+  segmentContext: string,
+  options?: { userNotes?: string | null; template?: string | null },
+) {
   if (config.fixtureMode || !config.openAiApiKey) {
     return fixtureExtract();
   }
+  const template = normalizeTemplate(options?.template);
+  const notes = options?.userNotes?.trim() || "";
+  const notesBlock = notes
+    ? `USER NOTES (weave into summary/key points only when supported by the transcript; do not invent from notes alone):\n${notes}\n\n`
+    : "";
   const openai = client();
   const completion = await openai.chat.completions.create({
     model: config.extractModel,
@@ -25,7 +60,9 @@ export async function extractFromTranscript(transcriptText: string, segmentConte
       { role: "system", content: EXTRACT_SYSTEM },
       {
         role: "user",
-        content: `TRANSCRIPT:\n${transcriptText}\n\nSEGMENTS:\n${segmentContext}`,
+        content:
+          `${notesBlock}TEMPLATE: ${template}\nGuidance: ${TEMPLATE_GUIDANCE[template]}\n\n` +
+          `TRANSCRIPT:\n${transcriptText}\n\nSEGMENTS:\n${segmentContext}`,
       },
     ],
   });
