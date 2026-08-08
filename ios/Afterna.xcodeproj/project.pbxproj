@@ -68,6 +68,9 @@
 		0DF5915BCBC34FE481B66702 /* TodosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodosView.swift; sourceTree = "<group>"; };
 		1D6D29349D54B2885BA04521 /* KeychainTokenStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainTokenStore.swift; sourceTree = "<group>"; };
 		2AAF6DC652EDE0B98A250401 /* AudioCapturing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCapturing.swift; sourceTree = "<group>"; };
+		E1A2B3C4D5E6F708192A3B4D /* StreamingMicEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamingMicEngine.swift; sourceTree = "<group>"; };
+		E1A2B3C4D5E6F708192A3B4F /* AssemblyAIStreamingClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssemblyAIStreamingClient.swift; sourceTree = "<group>"; };
+		E1A2B3C4D5E6F708192A3B51 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2B9E63A2BAACED0B2B1A5023 /* CreditsWallet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreditsWallet.swift; sourceTree = "<group>"; };
 		2D9532581D6FF12F1244FC11 /* FeatureFlags.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureFlags.swift; sourceTree = "<group>"; };
 		3E21A03C73B9C3D6E6246AD3 /* NativeAdManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeAdManager.swift; sourceTree = "<group>"; };
@@ -255,6 +258,8 @@
 			isa = PBXGroup;
 			children = (
 				2AAF6DC652EDE0B98A250401 /* AudioCapturing.swift */,
+				E1A2B3C4D5E6F708192A3B4D /* StreamingMicEngine.swift */,
+				E1A2B3C4D5E6F708192A3B4F /* AssemblyAIStreamingClient.swift */,
 			);
 			path = Audio;
 			sourceTree = "<group>";
@@ -299,6 +304,7 @@
 			isa = PBXGroup;
 			children = (
 				93C1D6E11BBB8AA8DB9F5947 /* AfternaApp.swift */,
+				E1A2B3C4D5E6F708192A3B51 /* Assets.xcassets */,
 				0577C16E86E939CC18452E5B /* Ads */,
 				4489FE2F6F95FCA8A02046BE /* App */,
 				3F6607EB3EA59EFB441B442D /* Audio */,
@@ -307,9 +313,9 @@
 				228A739515EA4A1530BB47B8 /* Core */,
 				3C24F82722479E182C8CFC8B /* Credits */,
 				3D9D9F5F11A11981CC13102D /* Features */,
-				431EBD1FA8DCFF354737A9D7 /* Sync */,				3B47F9C8A92D4AFAA3F4B12D /* Notifications */,
+				431EBD1FA8DCFF354737A9D7 /* Sync */,
+				3B47F9C8A92D4AFAA3F4B12D /* Notifications */,
 				4A32E293145444468739A449 /* LiveActivity */,
-
 			);
 			path = Afterna;
 			sourceTree = "<group>";
@@ -393,6 +399,7 @@
 			buildPhases = (
 				20FD604C90F96CFB6D8360D3 /* Sources */,
 				C301E23EDED77B906B91DBB4 /* Frameworks */,
+				E1A2B3C4D5E6F708192A3B52 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -452,6 +459,8 @@
 				1310F8038FE88D13BA7B86A6 /* AppContainer.swift in Sources */,
 				3F21FF001BC972FD9892EAC6 /* AppOpenAdManager.swift in Sources */,
 				D0DD61E456905F494D209BE6 /* AudioCapturing.swift in Sources */,
+				E1A2B3C4D5E6F708192A3B4C /* StreamingMicEngine.swift in Sources */,
+				E1A2B3C4D5E6F708192A3B4E /* AssemblyAIStreamingClient.swift in Sources */,
 				BE158D3C327879D0240B72EA /* AuthConfig.swift in Sources */,
 				0A51A15EE7C24B6A9F1D2C30 /* AskAISheet.swift in Sources */,
 				A2703353D20F4562A4E27DE0 /* LocalNotificationService.swift in Sources */,
@@ -492,6 +501,17 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXResourcesBuildPhase section */
+		E1A2B3C4D5E6F708192A3B52 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E1A2B3C4D5E6F708192A3B50 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
 		65FD7A4EFA6664C78CFBB04C /* Release */ = {
