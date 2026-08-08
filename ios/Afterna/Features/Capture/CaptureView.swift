@@ -26,6 +26,8 @@ struct CaptureView: View {
     @State private var draftEntity: ConversationEntity?
     @State private var userNotes = ""
     @State private var meetingTemplate: MeetingTemplate = .general
+    @State private var autoArchiveTask: Task<Void, Never>?
+    @State private var autoArchiveSecondsLeft: Int?
 
     var body: some View {
         ZStack {
@@ -82,8 +84,25 @@ struct CaptureView: View {
                     templatePicker
                 }
 
-                if canArchive && !isRecording {
+                    if canArchive && !isRecording {
+                    if let seconds = autoArchiveSecondsLeft {
+                        HStack {
+                            Text("Auto-archiving in \(seconds)s…")
+                                .font(.subheadline)
+                                .foregroundStyle(DesignTokens.textSecondary)
+                            Spacer()
+                            Button("Undo") {
+                                cancelAutoArchive()
+                                setStatus("Draft kept — archive whenever you’re ready")
+                            }
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(DesignTokens.accent)
+                        }
+                        .padding(.horizontal, 24)
+                    }
+
                     Button {
+                        cancelAutoArchive()
                         Task { await archiveLiveSession() }
                     } label: {
                         Text(isArchiving ? "Archiving…" : "Archive & extract key points")
@@ -259,6 +278,7 @@ struct CaptureView: View {
             return
         }
 
+        cancelAutoArchive()
         sessionId = UUID()
         finalTurns = []
         partialText = ""
@@ -296,10 +316,14 @@ struct CaptureView: View {
             isRecording = true
             setStatus("Listening…")
             Haptics.impact()
+            let liveTitle = container.calendar.selectedTitle ?? "Conversation"
+            RecordingLiveActivityController.start(sessionId: sessionId, title: liveTitle)
+            await LocalNotificationService.requestAuthorizationIfNeeded()
         } catch {
             setStatus("Could not start: \(error.localizedDescription)", isError: true)
             await streamClient.stop()
             container.audio.onPCMChunk = nil
+            RecordingLiveActivityController.end()
         }
     }
 
@@ -309,6 +333,7 @@ struct CaptureView: View {
             let result = try container.audio.stop()
             container.audio.onPCMChunk = nil
             await streamClient.stop()
+            RecordingLiveActivityController.end()
             isRecording = false
             lastDurationMs = result.durationMs
             container.credits.consume(durationMs: result.durationMs)
@@ -334,15 +359,37 @@ struct CaptureView: View {
                 canArchive = false
             } else {
                 saveDraftFromCaptions()
-                setStatus("Draft saved — Archive for key points when ready")
+                setStatus("Draft saved — auto-archiving unless you Undo")
                 canArchive = true
+                scheduleAutoArchive()
             }
         } catch {
             setStatus("Could not finish recording: \(error.localizedDescription)", isError: true)
             isRecording = false
             container.audio.onPCMChunk = nil
             await streamClient.stop()
+            RecordingLiveActivityController.end()
         }
+    }
+
+    private func scheduleAutoArchive() {
+        cancelAutoArchive()
+        autoArchiveSecondsLeft = 4
+        autoArchiveTask = Task { @MainActor in
+            for remaining in stride(from: 4, through: 1, by: -1) {
+                autoArchiveSecondsLeft = remaining
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                if Task.isCancelled { return }
+            }
+            autoArchiveSecondsLeft = nil
+            await archiveLiveSession()
+        }
+    }
+
+    private func cancelAutoArchive() {
+        autoArchiveTask?.cancel()
+        autoArchiveTask = nil
+        autoArchiveSecondsLeft = nil
     }
 
     /// Writes a local draft conversation + segments the moment recording stops.
@@ -578,6 +625,7 @@ struct CaptureView: View {
                 if status.status == "succeeded" {
                     await container.memoryOrg.hydrateFromServer(entity, api: container.api, modelContext: modelContext)
                     setStatus("Archived — key points ready in Memories")
+                    LocalNotificationService.notifyNotesReady(title: entity.title, conversationId: entity.id)
                     return
                 }
                 if status.status == "failed" || status.status == "dead" {

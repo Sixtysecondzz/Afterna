@@ -1,11 +1,12 @@
 import SwiftUI
 import SwiftData
 
-/// Shared Ask AI sheet for a single memory or cross-conversation scope.
+/// Shared Ask AI sheet for a single memory, all memories, folder, or person.
 enum AskAIScope: String, CaseIterable, Identifiable, Hashable {
     case conversation
     case all
     case folder
+    case person
 
     var id: String { rawValue }
 
@@ -14,12 +15,14 @@ enum AskAIScope: String, CaseIterable, Identifiable, Hashable {
         case .conversation: return "This memory"
         case .all: return "All memories"
         case .folder: return "This folder"
+        case .person: return "Person"
         }
     }
 }
 
 struct AskAISheet: View {
     var conversation: ConversationEntity?
+    var personName: String?
 
     @Environment(AppContainer.self) private var container
     @Environment(\.dismiss) private var dismiss
@@ -34,21 +37,23 @@ struct AskAISheet: View {
     @State private var errorText: String?
     @FocusState private var questionFocused: Bool
 
-    init(conversation: ConversationEntity? = nil) {
+    init(conversation: ConversationEntity? = nil, personName: String? = nil) {
         self.conversation = conversation
-        _scope = State(initialValue: conversation == nil ? .all : .conversation)
+        self.personName = personName
+        if let personName, !personName.isEmpty {
+            _scope = State(initialValue: .person)
+        } else {
+            _scope = State(initialValue: conversation == nil ? .all : .conversation)
+        }
     }
 
     private var availableScopes: [AskAIScope] {
         var scopes: [AskAIScope] = []
-        if conversation != nil {
-            scopes.append(.conversation)
-        }
+        if conversation != nil { scopes.append(.conversation) }
+        if let personName, !personName.isEmpty { scopes.append(.person) }
         if crossConversationEnabled {
             scopes.append(.all)
-            if conversation?.folderId != nil {
-                scopes.append(.folder)
-            }
+            if conversation?.folderId != nil { scopes.append(.folder) }
         }
         if scopes.isEmpty {
             scopes = conversation == nil ? [.all] : [.conversation]
@@ -61,11 +66,8 @@ struct AskAISheet: View {
         case .conversation: return "Ask about this memory"
         case .all: return "Ask across your memories"
         case .folder: return "Ask in this folder"
+        case .person: return "Ask about \(personName ?? "this person")"
         }
-    }
-
-    private var citationsHeading: String {
-        scope == .conversation ? "From the conversation" : "Sources"
     }
 
     var body: some View {
@@ -114,7 +116,7 @@ struct AskAISheet: View {
                     if busy {
                         HStack(spacing: DesignTokens.spaceS) {
                             ProgressView()
-                            Text("Thinking…")
+                            Text("Searching your memories…")
                                 .foregroundStyle(DesignTokens.textSecondary)
                         }
                     }
@@ -133,7 +135,7 @@ struct AskAISheet: View {
                             .background(DesignTokens.mist.opacity(0.5), in: RoundedRectangle(cornerRadius: DesignTokens.radius))
 
                         if !answer.citations.isEmpty {
-                            Text(citationsHeading)
+                            Text(scope == .conversation ? "From the conversation" : "Sources")
                                 .font(.headline)
                                 .foregroundStyle(DesignTokens.ink)
                             ForEach(answer.citations) { citation in
@@ -196,6 +198,7 @@ struct AskAISheet: View {
     }
 
     private func memoryTitle(for citation: Citation) -> String? {
+        if let remote = citation.conversationTitle, !remote.isEmpty { return remote }
         guard let uuid = UUID(uuidString: citation.conversationId) else { return nil }
         return conversations.first { $0.serverConversationId == uuid }?.title
     }
@@ -211,6 +214,10 @@ struct AskAISheet: View {
             errorText = "This memory isn’t in a folder."
             return
         }
+        if scope == .person, (personName ?? "").isEmpty {
+            errorText = "No person selected."
+            return
+        }
 
         busy = true
         errorText = nil
@@ -220,7 +227,8 @@ struct AskAISheet: View {
                 question: trimmed,
                 conversationId: scope == .conversation ? conversation?.serverConversationId : nil,
                 scope: scope.rawValue,
-                folderId: scope == .folder ? conversation?.folderId : nil
+                folderId: scope == .folder ? conversation?.folderId : nil,
+                personName: scope == .person ? personName : nil
             )
         } catch {
             errorText = "Couldn’t get an answer — check your connection and try again."

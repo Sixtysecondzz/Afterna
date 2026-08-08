@@ -69,6 +69,18 @@ export function fixtureExtract() {
         aliases: [],
         mentions: [{ segment_id: "seg-1", t_start_ms: 0, t_end_ms: 4200 }],
       },
+      {
+        name: "Alex",
+        type: "person",
+        aliases: ["A"],
+        mentions: [{ segment_id: "seg-1", t_start_ms: 0, t_end_ms: 4200 }],
+      },
+      {
+        name: "Sam",
+        type: "person",
+        aliases: ["B"],
+        mentions: [{ segment_id: "seg-2", t_start_ms: 4300, t_end_ms: 9100 }],
+      },
     ],
   };
 }

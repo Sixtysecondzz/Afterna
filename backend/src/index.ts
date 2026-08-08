@@ -11,6 +11,8 @@ import { webhookRoutes } from "./routes/webhooks.js";
 import { streamingRoutes } from "./routes/streaming.js";
 import { archiveRoutes } from "./routes/archive.js";
 import { shareRoutes } from "./routes/share.js";
+import { briefRoutes } from "./routes/briefs.js";
+import { peopleRoutes } from "./routes/people.js";
 import { processAvailableJobs } from "./jobs/processJobs.js";
 
 const app = new Hono();
@@ -47,6 +49,8 @@ app.route("/", webhookRoutes);
 app.route("/", streamingRoutes);
 app.route("/", archiveRoutes);
 app.route("/", shareRoutes);
+app.route("/", briefRoutes);
+app.route("/", peopleRoutes);
 
 /** Dev convenience: process queued jobs inline once. */
 app.post("/v1/worker/tick", async (c) => {

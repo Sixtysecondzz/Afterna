@@ -6,79 +6,17 @@ import { AuthError, hasSupabase, memory, resolveUserId } from "../lib/supabase.j
 import { getAdminClient } from "../lib/supabase.js";
 import { id, yearMonth } from "../lib/ids.js";
 import { config } from "../config.js";
+import { retrieveContextForAsk } from "../lib/retrieve.js";
 
 export const askRoutes = new Hono();
 
 const askSchema = z.object({
   question: z.string().min(1).max(2000),
-  scope: z.enum(["conversation", "all", "folder"]).default("conversation"),
+  scope: z.enum(["conversation", "all", "folder", "person"]).default("conversation"),
   conversation_id: z.string().uuid().optional(),
   folder_id: z.string().uuid().optional(),
+  person_name: z.string().min(1).max(120).optional(),
 });
-
-async function retrieveContext(userId: string, body: z.infer<typeof askSchema>) {
-  if (!hasSupabase()) {
-    const blocks: Array<{
-      conversation_id: string;
-      segment_id: string;
-      t_start_ms: number;
-      t_end_ms: number;
-      speaker_label?: string;
-      text: string;
-    }> = [];
-    for (const [conversationId, segments] of memory.segments.entries()) {
-      const conv = memory.conversations.get(conversationId);
-      if (!conv || conv.user_id !== userId) continue;
-      if (body.scope === "conversation" && body.conversation_id && conversationId !== body.conversation_id) {
-        continue;
-      }
-      if (body.scope === "folder" && body.folder_id && String(conv.folder_id ?? "") !== body.folder_id) {
-        continue;
-      }
-      for (const s of segments) {
-        blocks.push({
-          conversation_id: conversationId,
-          segment_id: String(s.id),
-          t_start_ms: Number(s.t_start_ms),
-          t_end_ms: Number(s.t_end_ms),
-          speaker_label: s.speaker_label ? String(s.speaker_label) : undefined,
-          text: String(s.text),
-        });
-      }
-    }
-    return blocks.slice(0, 12);
-  }
-
-  const sb = getAdminClient();
-  let q = sb
-    .from("transcript_segments")
-    .select("id, conversation_id, t_start_ms, t_end_ms, text, speakers(label)")
-    .eq("user_id", userId)
-    .limit(20);
-  if (body.scope === "conversation" && body.conversation_id) {
-    q = q.eq("conversation_id", body.conversation_id);
-  } else if (body.scope === "folder" && body.folder_id) {
-    const { data: folderConvs, error: folderErr } = await sb
-      .from("conversations")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("folder_id", body.folder_id);
-    if (folderErr) throw folderErr;
-    const ids = (folderConvs ?? []).map((c) => c.id as string);
-    if (ids.length === 0) return [];
-    q = q.in("conversation_id", ids);
-  }
-  const { data, error } = await q;
-  if (error) throw error;
-  return (data ?? []).map((s) => ({
-    conversation_id: s.conversation_id as string,
-    segment_id: s.id as string,
-    t_start_ms: s.t_start_ms as number,
-    t_end_ms: s.t_end_ms as number,
-    speaker_label: (s.speakers as { label?: string } | null)?.label,
-    text: s.text as string,
-  }));
-}
 
 askRoutes.post("/v1/ask", async (c) => {
   try {
@@ -87,8 +25,23 @@ askRoutes.post("/v1/ask", async (c) => {
     if (body.scope === "conversation" && !body.conversation_id) {
       return c.json({ error: "conversation_id required for conversation scope" }, 400);
     }
+    if (body.scope === "folder" && !body.folder_id) {
+      return c.json({ error: "folder_id required for folder scope" }, 400);
+    }
+    if (body.scope === "person" && !body.person_name) {
+      return c.json({ error: "person_name required for person scope" }, 400);
+    }
 
-    const contextBlocks = await retrieveContext(userId, body);
+    const contextBlocks = await retrieveContextForAsk({
+      userId,
+      question: body.question,
+      scope: body.scope,
+      conversationId: body.conversation_id,
+      folderId: body.folder_id,
+      personName: body.person_name,
+      limit: 12,
+    });
+
     if (contextBlocks.length === 0) {
       return c.json({
         answer: "I don't have enough transcript evidence to answer that yet.",
@@ -99,6 +52,17 @@ askRoutes.post("/v1/ask", async (c) => {
 
     const result = await askWithContext({ question: body.question, contextBlocks });
 
+    // Enrich citations with conversation titles when available.
+    const titleByConv = new Map(
+      contextBlocks
+        .filter((b) => b.conversation_title)
+        .map((b) => [b.conversation_id, b.conversation_title!] as const),
+    );
+    const citations = result.citations.map((cit) => ({
+      ...cit,
+      conversation_title: titleByConv.get(cit.conversation_id) ?? null,
+    }));
+
     const queryId = id();
     if (!hasSupabase()) {
       memory.queries.push({
@@ -108,19 +72,19 @@ askRoutes.post("/v1/ask", async (c) => {
         conversation_id: body.conversation_id ?? null,
         question: body.question,
         answer: result.answer,
-        citations: result.citations,
+        citations,
         created_at: new Date().toISOString(),
       });
     } else {
       await getAdminClient().from("ai_queries").insert({
         id: queryId,
         user_id: userId,
-        scope: body.scope,
+        scope: body.scope === "person" ? "all" : body.scope,
         conversation_id: body.conversation_id ?? null,
         folder_id: body.folder_id ?? null,
         question: body.question,
         answer: result.answer,
-        citations: result.citations,
+        citations,
         model: config.askModel,
         prompt_version: config.promptVersion,
       });
@@ -152,7 +116,7 @@ askRoutes.post("/v1/ask", async (c) => {
         }
         await stream.writeSSE({
           event: "done",
-          data: JSON.stringify({ id: queryId, citations: result.citations }),
+          data: JSON.stringify({ id: queryId, citations }),
         });
       });
     }
@@ -160,7 +124,7 @@ askRoutes.post("/v1/ask", async (c) => {
     return c.json({
       id: queryId,
       answer: result.answer,
-      citations: result.citations,
+      citations,
       model: config.fixtureMode ? "fixture" : config.askModel,
     });
   } catch (err) {

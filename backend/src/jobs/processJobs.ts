@@ -211,6 +211,53 @@ async function runExtract(job: AiJobRow): Promise<void> {
       t_end_ms: a.t_end_ms,
     });
   }
+
+  // Persist people/companies so the People graph and person-scoped Ask can use them.
+  for (const e of extracted.entities ?? []) {
+    const name = String(e.name ?? "").trim();
+    if (!name) continue;
+    const type = ["person", "company", "project", "topic", "place", "other"].includes(String(e.type))
+      ? String(e.type)
+      : "other";
+    const { data: entity, error: entErr } = await sb
+      .from("entities")
+      .upsert(
+        {
+          user_id: job.user_id,
+          type,
+          canonical_name: name,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id,type,canonical_name" },
+      )
+      .select("id, mention_count")
+      .single();
+    if (entErr || !entity) continue;
+    await sb
+      .from("entities")
+      .update({ mention_count: (entity.mention_count ?? 0) + 1 })
+      .eq("id", entity.id);
+    for (const alias of e.aliases ?? []) {
+      const a = String(alias).trim();
+      if (!a) continue;
+      await sb.from("entity_aliases").upsert(
+        { user_id: job.user_id, entity_id: entity.id, alias: a },
+        { onConflict: "user_id,alias" },
+      );
+    }
+    for (const m of e.mentions ?? []) {
+      const segId = m.segment_id ? String(m.segment_id) : null;
+      if (!segId) continue;
+      // Best-effort: skip if segment id is not a real UUID from this conversation.
+      if (!/^[0-9a-f-]{36}$/i.test(segId)) continue;
+      await sb.from("entity_mentions").insert({
+        entity_id: entity.id,
+        conversation_id: conversationId,
+        segment_id: segId,
+        user_id: job.user_id,
+      });
+    }
+  }
 }
 
 async function runEmbed(job: AiJobRow): Promise<void> {

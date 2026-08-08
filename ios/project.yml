@@ -30,7 +30,6 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.afterna.ios
         PRODUCT_NAME: Afterna
-        # Apple Developer Team (Sign in with Apple / device runs / Archive)
         DEVELOPMENT_TEAM: V5GB46FZ48
         SWIFT_VERSION: "5.0"
         GENERATE_INFOPLIST_FILE: YES
@@ -44,6 +43,7 @@ targets:
         INFOPLIST_KEY_NSMicrophoneUsageDescription: Afterna records conversations you choose to capture.
         INFOPLIST_KEY_NSCalendarsUsageDescription: Afterna uses your calendar to suggest titles for meetings you record.
         INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription: Afterna uses your calendar to suggest titles for meetings you record.
+        INFOPLIST_KEY_NSUserNotificationsUsageDescription: Afterna notifies you when a meeting is starting and when your notes are ready.
         INFOPLIST_KEY_UIBackgroundModes: [audio]
         CURRENT_PROJECT_VERSION: "1"
         MARKETING_VERSION: "0.1.0"
@@ -56,5 +56,30 @@ targets:
     dependencies:
       - package: GoogleMobileAds
         product: GoogleMobileAds
+      - target: AfternaWidgets
+    scheme:
+      testTargets: []
+
+  AfternaWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: AfternaWidgets
+        excludes:
+          - "**/.DS_Store"
+      - path: Afterna/LiveActivity/RecordingActivityAttributes.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.afterna.ios.widgets
+        PRODUCT_NAME: AfternaWidgets
+        DEVELOPMENT_TEAM: V5GB46FZ48
+        SWIFT_VERSION: "5.0"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Afterna
+        INFOPLIST_KEY_NSExtension_NSExtensionPointIdentifier: com.apple.widgetkit-extension
+        IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+        TARGETED_DEVICE_FAMILY: "1"
+        SKIP_INSTALL: YES
+        LD_RUNPATH_SEARCH_PATHS: ["$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks"]
     scheme:
       testTargets: []

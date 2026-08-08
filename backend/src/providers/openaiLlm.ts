@@ -84,7 +84,15 @@ export async function embedTexts(texts: string[]): Promise<number[][]> {
 
 export async function askWithContext(input: {
   question: string;
-  contextBlocks: Array<{ conversation_id: string; segment_id: string; t_start_ms: number; t_end_ms: number; speaker_label?: string; text: string }>;
+  contextBlocks: Array<{
+    conversation_id: string;
+    segment_id: string;
+    t_start_ms: number;
+    t_end_ms: number;
+    speaker_label?: string;
+    text: string;
+    conversation_title?: string;
+  }>;
 }): Promise<{ answer: string; citations: Citation[] }> {
   if (config.fixtureMode || !config.openAiApiKey || input.contextBlocks.length === 0) {
     const fixture = fixtureAskAnswer(input.question);
@@ -132,6 +140,7 @@ export async function askWithContext(input: {
     t_end_ms: b.t_end_ms,
     speaker_label: b.speaker_label ?? null,
     quote: b.text.slice(0, 100),
+    conversation_title: b.conversation_title ?? null,
   }));
   return { answer, citations };
 }

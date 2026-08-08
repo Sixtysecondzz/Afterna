@@ -138,6 +138,7 @@ public struct Citation: Codable, Sendable, Identifiable, Equatable {
     public var tEndMs: Int
     public var speakerLabel: String?
     public var quote: String
+    public var conversationTitle: String?
 
     enum CodingKeys: String, CodingKey {
         case conversationId = "conversation_id"
@@ -146,6 +147,82 @@ public struct Citation: Codable, Sendable, Identifiable, Equatable {
         case tEndMs = "t_end_ms"
         case speakerLabel = "speaker_label"
         case quote
+        case conversationTitle = "conversation_title"
+    }
+}
+
+public struct MeetingBriefResponse: Codable, Sendable {
+    public var title: String
+    public var priorDecisions: [String]
+    public var openTodos: [String]
+    public var suggestedQuestions: [String]
+    public var relatedConversationIds: [String]
+    public var summarySnippets: [String]
+
+    enum CodingKeys: String, CodingKey {
+        case title
+        case priorDecisions = "prior_decisions"
+        case openTodos = "open_todos"
+        case suggestedQuestions = "suggested_questions"
+        case relatedConversationIds = "related_conversation_ids"
+        case summarySnippets = "summary_snippets"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        title = (try? c.decodeIfPresent(String.self, forKey: .title)) ?? "Upcoming meeting"
+        priorDecisions = (try? c.decodeIfPresent([String].self, forKey: .priorDecisions)) ?? []
+        openTodos = (try? c.decodeIfPresent([String].self, forKey: .openTodos)) ?? []
+        suggestedQuestions = (try? c.decodeIfPresent([String].self, forKey: .suggestedQuestions)) ?? []
+        relatedConversationIds = (try? c.decodeIfPresent([String].self, forKey: .relatedConversationIds)) ?? []
+        summarySnippets = (try? c.decodeIfPresent([String].self, forKey: .summarySnippets)) ?? []
+    }
+}
+
+public struct PersonSummary: Codable, Sendable, Identifiable, Equatable {
+    public var id: UUID
+    public var name: String
+    public var type: String?
+    public var mentionCount: Int
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, type
+        case mentionCount = "mention_count"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        type = try? c.decodeIfPresent(String.self, forKey: .type)
+        mentionCount = (try? c.decodeIfPresent(Int.self, forKey: .mentionCount)) ?? 0
+    }
+}
+
+public struct PeopleListResponse: Codable, Sendable {
+    public var people: [PersonSummary]
+}
+
+public struct PersonDetailResponse: Codable, Sendable {
+    public var id: UUID
+    public var name: String
+    public var type: String?
+    public var openTodos: [String]
+    public var relatedConversationIds: [String]
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, type
+        case openTodos = "open_todos"
+        case relatedConversationIds = "related_conversation_ids"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        type = try? c.decodeIfPresent(String.self, forKey: .type)
+        openTodos = (try? c.decodeIfPresent([String].self, forKey: .openTodos)) ?? []
+        relatedConversationIds = (try? c.decodeIfPresent([String].self, forKey: .relatedConversationIds)) ?? []
     }
 }
 

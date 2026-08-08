@@ -40,6 +40,7 @@ export interface Citation {
   t_end_ms: number;
   speaker_label?: string | null;
   quote: string;
+  conversation_title?: string | null;
 }
 
 export interface RemoteConfig {

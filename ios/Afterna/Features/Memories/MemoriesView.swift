@@ -123,6 +123,14 @@ struct MemoriesView: View {
         }
         .navigationTitle("Memories")
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                NavigationLink {
+                    PeopleView()
+                } label: {
+                    Image(systemName: "person.2")
+                }
+                .accessibilityLabel("People")
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     showFolders = true

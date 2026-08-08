@@ -3,6 +3,7 @@ import SwiftUI
 /// Compact chip picker of upcoming calendar meetings for Capture.
 struct UpcomingMeetingBanner: View {
     var calendar: CalendarService
+    @State private var briefMeeting: CalendarMeeting?
 
     var body: some View {
         if calendar.shouldShowBanner {
@@ -11,10 +12,19 @@ struct UpcomingMeetingBanner: View {
                     startingSoonRow(prompt)
                 }
 
-                Text("Link to meeting")
-                    .font(DesignTokens.captionFont)
-                    .foregroundStyle(DesignTokens.textSecondary)
-                    .padding(.horizontal, DesignTokens.spaceXS)
+                HStack {
+                    Text("Link to meeting")
+                        .font(DesignTokens.captionFont)
+                        .foregroundStyle(DesignTokens.textSecondary)
+                    Spacer()
+                    if let selected = calendar.selectedMeeting {
+                        Button("Brief") { briefMeeting = selected }
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(DesignTokens.accent)
+                            .accessibilityLabel("Open meeting brief")
+                    }
+                }
+                .padding(.horizontal, DesignTokens.spaceXS)
 
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: DesignTokens.spaceS) {
@@ -27,6 +37,9 @@ struct UpcomingMeetingBanner: View {
                 }
             }
             .accessibilityElement(children: .contain)
+            .sheet(item: $briefMeeting) { meeting in
+                MeetingBriefSheet(meetingTitle: meeting.title, attendeeNames: meeting.attendeeNames)
+            }
         }
     }
 

@@ -87,13 +87,15 @@ public actor APIClient {
         question: String,
         conversationId: UUID?,
         scope: String = "conversation",
-        folderId: UUID? = nil
+        folderId: UUID? = nil,
+        personName: String? = nil
     ) async throws -> AskResponse {
         struct Body: Encodable {
             let question: String
             let scope: String
             let conversation_id: UUID?
             let folder_id: UUID?
+            let person_name: String?
         }
         return try await authorizedPost(
             path: "v1/ask",
@@ -101,7 +103,44 @@ public actor APIClient {
                 question: question,
                 scope: scope,
                 conversation_id: conversationId,
-                folder_id: folderId
+                folder_id: folderId,
+                person_name: personName
+            )
+        )
+    }
+
+    public func meetingBrief(title: String?, attendeeNames: [String]) async throws -> MeetingBriefResponse {
+        struct Body: Encodable {
+            let title: String?
+            let attendee_names: [String]
+        }
+        return try await authorizedPost(
+            path: "v1/briefs/meeting",
+            body: Body(title: title, attendee_names: attendeeNames)
+        )
+    }
+
+    public func listPeople() async throws -> PeopleListResponse {
+        try await authorizedGet(path: "v1/people")
+    }
+
+    public func personDetail(id: UUID) async throws -> PersonDetailResponse {
+        try await authorizedGet(path: "v1/people/\(id.uuidString.lowercased())")
+    }
+
+    public func renameSpeaker(conversationId: UUID, fromLabel: String, toName: String) async throws {
+        struct Body: Encodable {
+            let conversation_id: String
+            let from_label: String
+            let to_name: String
+        }
+        struct Ok: Decodable { let ok: Bool? }
+        let _: Ok = try await authorizedPost(
+            path: "v1/speakers/rename",
+            body: Body(
+                conversation_id: conversationId.uuidString.lowercased(),
+                from_label: fromLabel,
+                to_name: toName
             )
         )
     }

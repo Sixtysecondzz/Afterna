@@ -23,6 +23,8 @@ struct ConversationDetailView: View {
     @State private var isCreatingShareLink = false
     @State private var isArchivingDraft = false
     @State private var archiveDraftError: String?
+    @State private var renameSpeakerFrom: String?
+    @State private var renameSpeakerTo = ""
 
     private var sortedQuotes: [QuoteEntity] {
         conversation.quotes.sorted { $0.createdAt > $1.createdAt }
@@ -125,6 +127,18 @@ struct ConversationDetailView: View {
             }
             Button("Cancel", role: .cancel) {}
         }
+        .alert("Rename speaker", isPresented: Binding(
+            get: { renameSpeakerFrom != nil },
+            set: { if !$0 { renameSpeakerFrom = nil } }
+        )) {
+            TextField("Name", text: $renameSpeakerTo)
+            Button("Save") {
+                Task { await applySpeakerRename() }
+            }
+            Button("Cancel", role: .cancel) { renameSpeakerFrom = nil }
+        } message: {
+            Text("All lines labeled Speaker \(renameSpeakerFrom ?? "") will use this name.")
+        }
         .confirmationDialog(
             "Delete this pull quote?",
             isPresented: Binding(get: { quoteToDelete != nil }, set: { if !$0 { quoteToDelete = nil } }),
@@ -207,6 +221,31 @@ struct ConversationDetailView: View {
         await container.memoryOrg.hydrateFromServer(conversation, api: container.api, modelContext: modelContext)
     }
 
+    @MainActor
+    private func applySpeakerRename() async {
+        guard let from = renameSpeakerFrom else { return }
+        let to = renameSpeakerTo.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !to.isEmpty else { return }
+        for seg in conversation.segments where seg.speakerLabel == from {
+            seg.speakerLabel = to
+        }
+        for quote in conversation.quotes where quote.speakerLabel == from {
+            quote.speakerLabel = to
+        }
+        try? modelContext.save()
+        if let serverId = conversation.serverConversationId {
+            try? await container.api.renameSpeaker(
+                conversationId: serverId,
+                fromLabel: from,
+                toName: to
+            )
+        }
+        renameSpeakerFrom = nil
+        withAnimation { quoteSavedMessage = "Speaker renamed to \(to)" }
+        try? await Task.sleep(nanoseconds: 1_500_000_000)
+        withAnimation { quoteSavedMessage = nil }
+    }
+
     // MARK: Summary
 
     private var summaryTab: some View {
@@ -233,6 +272,10 @@ struct ConversationDetailView: View {
                     bulletSection(title: "Decisions", items: conversation.decisions, symbol: "checkmark.seal")
                 }
 
+                if conversation.summaryText != nil || !conversation.keyPoints.isEmpty {
+                    aftermathActions
+                }
+
                 if !sortedQuotes.isEmpty {
                     Text("Pull quotes")
                         .font(.headline)
@@ -246,6 +289,87 @@ struct ConversationDetailView: View {
             .padding()
         }
         .refreshable { await hydrate() }
+    }
+
+    private var aftermathActions: some View {
+        VStack(alignment: .leading, spacing: DesignTokens.spaceS) {
+            Text("Next steps")
+                .font(.headline)
+            Button {
+                shareFollowUpDraft()
+            } label: {
+                Label("Draft follow-up message", systemImage: "envelope")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .buttonStyle(.bordered)
+            .tint(DesignTokens.accent)
+
+            if !sortedActions.filter({ $0.status == .open }).isEmpty || !conversation.keyPoints.isEmpty {
+                Button {
+                    Task { await addExtractedTodos() }
+                } label: {
+                    Label("Add open actions to To-dos", systemImage: "checklist")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(.bordered)
+                .tint(DesignTokens.accent)
+            }
+        }
+        .padding(.top, DesignTokens.spaceS)
+    }
+
+    private func shareFollowUpDraft() {
+        var lines: [String] = ["Hi —", ""]
+        if let summary = conversation.summaryText, !summary.isEmpty {
+            lines += ["Quick recap:", summary, ""]
+        }
+        if !conversation.keyPoints.isEmpty {
+            lines += ["Key points:"] + conversation.keyPoints.map { "• \($0)" } + [""]
+        }
+        let open = sortedActions.filter { $0.status == .open }.map(\.text)
+        if !open.isEmpty {
+            lines += ["Action items:"] + open.map { "• \($0)" } + [""]
+        }
+        lines += ["Thanks,", ""]
+        let text = lines.joined(separator: "\n")
+        UIPasteboard.general.string = text
+        shareLinkURL = nil
+        withAnimation { quoteSavedMessage = "Follow-up draft copied" }
+        Task {
+            try? await Task.sleep(nanoseconds: 1_200_000_000)
+            withAnimation { quoteSavedMessage = nil }
+        }
+        // Also present system share sheet with the draft text.
+        let url = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("afterna-followup.txt")
+        try? text.data(using: .utf8)?.write(to: url)
+        shareLinkURL = url
+    }
+
+    private func addExtractedTodos() async {
+        let existing = Set(sortedActions.map { $0.text.lowercased() })
+        var added = 0
+        let candidates: [String]
+        let openActions = sortedActions.filter { $0.status == .open }.map(\.text)
+        if !openActions.isEmpty {
+            // Open extract actions already live on this memory's To-dos tab — mirror any missing ones.
+            candidates = openActions
+        } else {
+            candidates = Array(conversation.keyPoints.prefix(8))
+        }
+        for text in candidates {
+            guard !existing.contains(text.lowercased()) else { continue }
+            await container.memoryOrg.createTodo(
+                text: text,
+                conversation: conversation,
+                modelContext: modelContext
+            )
+            added += 1
+        }
+        withAnimation {
+            quoteSavedMessage = added > 0 ? "Added \(added) to-do(s)" : "To-dos already up to date"
+        }
+        try? await Task.sleep(nanoseconds: 1_500_000_000)
+        withAnimation { quoteSavedMessage = nil }
     }
 
     private var draftArchiveCard: some View {
@@ -418,6 +542,12 @@ struct ConversationDetailView: View {
                         }
                     } label: {
                         Label("Save as pull quote", systemImage: "quote.bubble")
+                    }
+                    Button {
+                        renameSpeakerFrom = seg.speakerLabel
+                        renameSpeakerTo = seg.speakerLabel
+                    } label: {
+                        Label("Rename speaker…", systemImage: "person.crop.circle.badge.questionmark")
                     }
                 }
             }

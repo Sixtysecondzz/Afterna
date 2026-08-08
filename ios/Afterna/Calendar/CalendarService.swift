@@ -8,6 +8,7 @@ struct CalendarMeeting: Identifiable, Hashable, Sendable {
     let title: String
     let startDate: Date
     let endDate: Date
+    let attendeeNames: [String]
 
     var isHappeningNow: Bool {
         let now = Date()
@@ -133,17 +134,35 @@ final class CalendarService {
             guard let eventId = event.eventIdentifier else { return nil }
             let rawTitle = event.title?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
             let title = rawTitle.isEmpty ? "Untitled meeting" : rawTitle
+            let attendees = (event.attendees ?? [])
+                .compactMap { $0.name?.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { !$0.isEmpty }
             return CalendarMeeting(
                 id: eventId,
                 title: title,
                 startDate: event.startDate,
-                endDate: event.endDate
+                endDate: event.endDate,
+                attendeeNames: Array(attendees.prefix(12))
             )
         }
 
         upcomingMeetings = Array(meetings)
         reconcileSelection()
         updateStartingSoonPrompt()
+        scheduleMeetingNotifications()
+    }
+
+    private func scheduleMeetingNotifications() {
+        Task {
+            await LocalNotificationService.requestAuthorizationIfNeeded()
+            for meeting in upcomingMeetings where meeting.startsSoon || meeting.startDate > Date() {
+                LocalNotificationService.scheduleMeetingSoon(
+                    title: meeting.title,
+                    at: meeting.startDate,
+                    meetingId: meeting.id
+                )
+            }
+        }
     }
 
     private func reconcileSelection() {

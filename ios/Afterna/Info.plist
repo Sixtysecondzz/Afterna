@@ -219,6 +219,10 @@
 	<array>
 		<string>audio</string>
 	</array>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>Afterna notifies you when a meeting is starting and when your notes are ready.</string>
 	<!-- Calendar: EventKit full access (iOS 17+) + legacy key for older OS strings. -->
 	<key>NSCalendarsUsageDescription</key>
 	<string>Afterna uses your calendar to suggest titles for meetings you record.</string>
