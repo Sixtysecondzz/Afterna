@@ -1,5 +1,6 @@
 import Foundation
 import Security
+import os
 
 /// Keychain-backed access token for API + Supabase session.
 final class KeychainTokenStore: TokenStore, @unchecked Sendable {
@@ -7,29 +8,30 @@ final class KeychainTokenStore: TokenStore, @unchecked Sendable {
     private let account = "access_token"
     private let refreshAccount = "refresh_token"
     private let userAccount = "user_id"
-    private let lock = NSLock()
+    private let lock = OSAllocatedUnfairLock()
 
     func accessToken() async -> String? {
-        lock.lock(); defer { lock.unlock() }
-        return read(account: account)
+        lock.withLock { read(account: account) }
     }
 
     func save(accessToken: String, refreshToken: String?, userId: String?) {
-        lock.lock(); defer { lock.unlock() }
-        write(account: account, value: accessToken)
-        if let refreshToken {
-            write(account: refreshAccount, value: refreshToken)
-        }
-        if let userId {
-            write(account: userAccount, value: userId)
+        lock.withLock {
+            write(account: account, value: accessToken)
+            if let refreshToken {
+                write(account: refreshAccount, value: refreshToken)
+            }
+            if let userId {
+                write(account: userAccount, value: userId)
+            }
         }
     }
 
     func clear() {
-        lock.lock(); defer { lock.unlock() }
-        delete(account: account)
-        delete(account: refreshAccount)
-        delete(account: userAccount)
+        lock.withLock {
+            delete(account: account)
+            delete(account: refreshAccount)
+            delete(account: userAccount)
+        }
     }
 
     private func read(account: String) -> String? {
