@@ -12,7 +12,10 @@ export type MeetingTemplate = "general" | "one_on_one" | "standup" | "sales" | "
 
 const EXTRACT_SYSTEM = `Extract only what is explicitly supported by the transcript (and user notes when they clarify something already in the transcript). Prefer null over invention.
 If user notes conflict with the transcript, trust the transcript and ignore unsupported note claims.
-Attach segment_ids for every decision/action/deadline.
+Attach segment_ids for every decision/action/deadline when possible.
+Always populate entities with every person named or clearly referred to in the transcript (speakers and people talked about), plus notable companies/projects when explicit.
+Each entity must be { "name": string, "type": "person"|"company"|"project"|"topic"|"place"|"other", "aliases": string[], "mentions": [{ "segment_id"?: string, "t_start_ms"?: number, "t_end_ms"?: number }] }.
+Use type "person" for people names (e.g. Luke, Sarah). Prefer given names as canonical name; put speaker labels like "A" or "Speaker A" in aliases when linked.
 Return JSON with keys: summary, key_points, decisions, action_items, deadlines, entities.`;
 
 const TEMPLATE_GUIDANCE: Record<MeetingTemplate, string> = {
@@ -44,7 +47,11 @@ export async function extractFromTranscript(
   options?: { userNotes?: string | null; template?: string | null },
 ) {
   if (config.fixtureMode || !config.openAiApiKey) {
-    return fixtureExtract();
+    const fixture = fixtureExtract();
+    return {
+      ...fixture,
+      entities: normalizeEntities(fixture.entities, transcriptText || fixture.summary),
+    };
   }
   const template = normalizeTemplate(options?.template);
   const notes = options?.userNotes?.trim() || "";
@@ -67,7 +74,121 @@ export async function extractFromTranscript(
     ],
   });
   const raw = completion.choices[0]?.message?.content ?? "{}";
-  return JSON.parse(raw) as ReturnType<typeof fixtureExtract>;
+  const parsed = JSON.parse(raw) as ReturnType<typeof fixtureExtract>;
+  const keyPoints = Array.isArray(parsed.key_points)
+    ? parsed.key_points.map((k) => String(k)).join(" ")
+    : "";
+  const harvestText = [transcriptText, String(parsed.summary ?? ""), keyPoints].join("\n");
+  return {
+    ...parsed,
+    entities: normalizeEntities(parsed?.entities, harvestText),
+  };
+}
+
+type RawEntity = {
+  name?: unknown;
+  canonical_name?: unknown;
+  entity?: unknown;
+  type?: unknown;
+  aliases?: unknown;
+  mentions?: unknown;
+};
+
+/** Normalize model entity shapes and backfill obvious person names from the transcript. */
+export function normalizeEntities(raw: unknown, transcriptText: string): ReturnType<typeof fixtureExtract>["entities"] {
+  const out: ReturnType<typeof fixtureExtract>["entities"] = [];
+  const seen = new Set<string>();
+
+  const push = (name: string, type: string, aliases: string[] = [], mentions: Array<Record<string, unknown>> = []) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    const key = `${type}:${trimmed.toLowerCase()}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push({
+      name: trimmed,
+      type,
+      aliases,
+      mentions: mentions as ReturnType<typeof fixtureExtract>["entities"][number]["mentions"],
+    });
+  };
+
+  if (Array.isArray(raw)) {
+    for (const item of raw) {
+      const e = item as RawEntity;
+      const name = String(e.name ?? e.canonical_name ?? e.entity ?? "").trim();
+      if (!name) continue;
+      const type = ["person", "company", "project", "topic", "place", "other"].includes(String(e.type))
+        ? String(e.type)
+        : "other";
+      const aliases = Array.isArray(e.aliases)
+        ? e.aliases.map((a) => String(a).trim()).filter(Boolean)
+        : [];
+      const mentions = Array.isArray(e.mentions) ? (e.mentions as Array<Record<string, unknown>>) : [];
+      push(name, type, aliases, mentions);
+    }
+  }
+
+  // Fallback: harvest likely person names mentioned in dialogue when the model omitted entities.
+  const personCount = out.filter((e) => e.type === "person").length;
+  if (personCount === 0 && transcriptText.trim()) {
+    const stop = new Set([
+      "The",
+      "This",
+      "That",
+      "Then",
+      "There",
+      "They",
+      "We",
+      "I",
+      "And",
+      "But",
+      "So",
+      "Okay",
+      "Ok",
+      "Yeah",
+      "Yes",
+      "No",
+      "Hi",
+      "Hello",
+      "Thanks",
+      "Thank",
+      "Today",
+      "Tomorrow",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday",
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+      "Speaker",
+      "Afterna",
+    ]);
+    const hits = transcriptText.match(/\b[A-Z][a-z]{2,24}\b/g) ?? [];
+    const counts = new Map<string, number>();
+    for (const hit of hits) {
+      if (stop.has(hit)) continue;
+      counts.set(hit, (counts.get(hit) ?? 0) + 1);
+    }
+    for (const [name, count] of counts) {
+      if (count >= 1) push(name, "person");
+    }
+  }
+
+  return out;
 }
 
 export async function embedTexts(texts: string[]): Promise<number[][]> {

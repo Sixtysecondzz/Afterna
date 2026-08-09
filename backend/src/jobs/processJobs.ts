@@ -213,8 +213,11 @@ async function runExtract(job: AiJobRow): Promise<void> {
   }
 
   // Persist people/companies so the People graph and person-scoped Ask can use them.
+  const fallbackSegmentId =
+    segments.find((s) => typeof s.id === "string" && /^[0-9a-f-]{36}$/i.test(String(s.id)))?.id ?? null;
+
   for (const e of extracted.entities ?? []) {
-    const name = String(e.name ?? "").trim();
+    const name = String((e as { name?: unknown }).name ?? "").trim();
     if (!name) continue;
     const type = ["person", "company", "project", "topic", "place", "other"].includes(String(e.type))
       ? String(e.type)
@@ -232,7 +235,10 @@ async function runExtract(job: AiJobRow): Promise<void> {
       )
       .select("id, mention_count")
       .single();
-    if (entErr || !entity) continue;
+    if (entErr || !entity) {
+      console.error("[extract] entity upsert failed", name, entErr);
+      continue;
+    }
     await sb
       .from("entities")
       .update({ mention_count: (entity.mention_count ?? 0) + 1 })
@@ -245,15 +251,27 @@ async function runExtract(job: AiJobRow): Promise<void> {
         { onConflict: "user_id,alias" },
       );
     }
+
+    let linkedMention = false;
     for (const m of e.mentions ?? []) {
       const segId = m.segment_id ? String(m.segment_id) : null;
       if (!segId) continue;
       // Best-effort: skip if segment id is not a real UUID from this conversation.
       if (!/^[0-9a-f-]{36}$/i.test(segId)) continue;
-      await sb.from("entity_mentions").insert({
+      const { error: mentionErr } = await sb.from("entity_mentions").insert({
         entity_id: entity.id,
         conversation_id: conversationId,
         segment_id: segId,
+        user_id: job.user_id,
+      });
+      if (!mentionErr) linkedMention = true;
+    }
+    // Guarantee People detail can find related conversations even when the model omits segment ids.
+    if (!linkedMention && fallbackSegmentId) {
+      await sb.from("entity_mentions").insert({
+        entity_id: entity.id,
+        conversation_id: conversationId,
+        segment_id: fallbackSegmentId,
         user_id: job.user_id,
       });
     }

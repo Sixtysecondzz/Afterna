@@ -128,18 +128,32 @@ const renameSchema = z.object({
   to_name: z.string().min(1).max(120),
 });
 
+function speakerLabelVariants(label: string): string[] {
+  const raw = label.trim();
+  const stripped = raw.replace(/^speaker\s+/i, "").trim();
+  const prefixed = stripped.startsWith("Speaker") ? stripped : `Speaker ${stripped}`;
+  return [...new Set([raw, stripped, prefixed, `Speaker ${raw}`].filter(Boolean))];
+}
+
 /** Rename a speaker label in a conversation and link/create a person entity. */
 peopleRoutes.post("/v1/speakers/rename", async (c) => {
   try {
     const userId = resolveUserId(c.req.header("authorization"));
     const body = renameSchema.parse(await c.req.json());
     const toName = body.to_name.trim();
+    const fromVariants = speakerLabelVariants(body.from_label);
 
     if (!hasSupabase()) {
       const segments = memory.segments.get(body.conversation_id) ?? [];
       for (const s of segments) {
-        if (String(s.speaker_label) === body.from_label) {
+        if (fromVariants.includes(String(s.speaker_label ?? ""))) {
           s.speaker_label = toName;
+        }
+      }
+      const speakers = memory.speakers.get(body.conversation_id) ?? [];
+      for (const sp of speakers) {
+        if (fromVariants.includes(String(sp.label ?? ""))) {
+          sp.label = toName;
         }
       }
       const ents = memory.entities.get(body.conversation_id) ?? [];
@@ -148,7 +162,7 @@ peopleRoutes.post("/v1/speakers/rename", async (c) => {
         user_id: userId,
         type: "person",
         canonical_name: toName,
-        aliases: [body.from_label],
+        aliases: fromVariants,
         mentions: [],
       });
       memory.entities.set(body.conversation_id, ents);
@@ -172,24 +186,43 @@ peopleRoutes.post("/v1/speakers/rename", async (c) => {
       .single();
     if (upsertErr) throw upsertErr;
 
-    await sb.from("entity_aliases").upsert(
-      { user_id: userId, entity_id: entity.id, alias: body.from_label },
-      { onConflict: "user_id,alias" },
-    );
+    for (const alias of fromVariants) {
+      await sb.from("entity_aliases").upsert(
+        { user_id: userId, entity_id: entity.id, alias },
+        { onConflict: "user_id,alias" },
+      );
+    }
 
     const { data: speakers } = await sb
       .from("speakers")
-      .select("id")
+      .select("id, label")
       .eq("conversation_id", body.conversation_id)
       .eq("user_id", userId)
-      .eq("label", body.from_label);
+      .in("label", fromVariants);
 
     for (const sp of speakers ?? []) {
       await sb.from("speakers").update({ label: toName, entity_id: entity.id }).eq("id", sp.id);
     }
 
-    // Also update any local-facing label stored only on joined reads — speakers.label is canonical.
-    return c.json({ ok: true, name: toName, entity_id: entity.id });
+    // Link this conversation into People even if extract missed the person.
+    const { data: anySeg } = await sb
+      .from("transcript_segments")
+      .select("id")
+      .eq("conversation_id", body.conversation_id)
+      .eq("user_id", userId)
+      .order("idx")
+      .limit(1)
+      .maybeSingle();
+    if (anySeg?.id) {
+      await sb.from("entity_mentions").insert({
+        entity_id: entity.id,
+        conversation_id: body.conversation_id,
+        segment_id: anySeg.id,
+        user_id: userId,
+      });
+    }
+
+    return c.json({ ok: true, name: toName, entity_id: entity.id, updated_speakers: (speakers ?? []).length });
   } catch (err) {
     if (err instanceof AuthError) return c.json({ error: err.message }, 401);
     if (err instanceof z.ZodError) return c.json({ error: err.flatten() }, 400);

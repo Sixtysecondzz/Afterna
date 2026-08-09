@@ -133,11 +133,14 @@ struct ConversationDetailView: View {
         )) {
             TextField("Name", text: $renameSpeakerTo)
             Button("Save") {
-                Task { await applySpeakerRename() }
+                // Capture before the alert dismiss clears renameSpeakerFrom.
+                let from = renameSpeakerFrom
+                let to = renameSpeakerTo
+                Task { await applySpeakerRename(from: from, to: to) }
             }
             Button("Cancel", role: .cancel) { renameSpeakerFrom = nil }
         } message: {
-            Text("All lines labeled Speaker \(renameSpeakerFrom ?? "") will use this name.")
+            Text("All lines labeled \(Self.displaySpeaker(renameSpeakerFrom ?? "")) will use this name.")
         }
         .confirmationDialog(
             "Delete this pull quote?",
@@ -221,24 +224,45 @@ struct ConversationDetailView: View {
         await container.memoryOrg.hydrateFromServer(conversation, api: container.api, modelContext: modelContext)
     }
 
+    private static func displaySpeaker(_ label: String) -> String {
+        let trimmed = label.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.lowercased().hasPrefix("speaker ") { return trimmed }
+        return "Speaker \(trimmed)"
+    }
+
+    private static func speakerLabelMatches(_ stored: String, _ from: String) -> Bool {
+        let a = stored.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let b = from.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let strip: (String) -> String = { $0.replacingOccurrences(of: #"^speaker\s+"#, with: "", options: .regularExpression) }
+        return a == b || strip(a) == strip(b) || a == "speaker \(strip(b))" || b == "speaker \(strip(a))"
+    }
+
     @MainActor
-    private func applySpeakerRename() async {
-        guard let from = renameSpeakerFrom else { return }
-        let to = renameSpeakerTo.trimmingCharacters(in: .whitespacesAndNewlines)
+    private func applySpeakerRename(from: String?, to rawTo: String) async {
+        guard let from, !from.isEmpty else { return }
+        let to = rawTo.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !to.isEmpty else { return }
-        for seg in conversation.segments where seg.speakerLabel == from {
+        for seg in conversation.segments where Self.speakerLabelMatches(seg.speakerLabel, from) {
             seg.speakerLabel = to
         }
-        for quote in conversation.quotes where quote.speakerLabel == from {
+        for quote in conversation.quotes where Self.speakerLabelMatches(quote.speakerLabel ?? "", from) {
             quote.speakerLabel = to
         }
         try? modelContext.save()
         if let serverId = conversation.serverConversationId {
-            try? await container.api.renameSpeaker(
-                conversationId: serverId,
-                fromLabel: from,
-                toName: to
-            )
+            do {
+                try await container.api.renameSpeaker(
+                    conversationId: serverId,
+                    fromLabel: from,
+                    toName: to
+                )
+            } catch {
+                withAnimation { quoteSavedMessage = "Renamed locally — server sync failed" }
+                renameSpeakerFrom = nil
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                withAnimation { quoteSavedMessage = nil }
+                return
+            }
         }
         renameSpeakerFrom = nil
         withAnimation { quoteSavedMessage = "Speaker renamed to \(to)" }
@@ -521,7 +545,7 @@ struct ConversationDetailView: View {
         } else {
             List(sortedSegments) { seg in
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Speaker \(seg.speakerLabel) · \(format(seg.startMs))")
+                    Text("\(Self.displaySpeaker(seg.speakerLabel)) · \(format(seg.startMs))")
                         .font(.caption)
                         .foregroundStyle(DesignTokens.accent)
                     Text(seg.text)
